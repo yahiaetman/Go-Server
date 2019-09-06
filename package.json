@@ -1,0 +1,47 @@
+{
+  "name": "go-server",
+  "version": "1.0.0",
+  "description": "Go Server is a 2-Player Websockets Go Judging Server.",
+  "main": "dist/main/main.js",
+  "repository": "https://github.com/yahiaetman/Go-Server.git",
+  "author": "Yetman <yahiazakaria13@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps",
+    "watch:main": "parcel watch src/main/main.ts -d dist/main --target electron --no-hmr",
+    "watch:renderer": "parcel watch src/renderer/index.html -d dist/renderer --public-url ./ --target electron --no-hmr",
+    "production": "parcel build src/main/main.ts -d dist/main --target electron && parcel build src/renderer/index.html -d dist/renderer --target electron"
+  },
+  "dependencies": {
+    "dateformat": "^3.0.3",
+    "lodash": "^4.17.15",
+    "material-design-icons": "^3.0.1",
+    "tocktimer": "^1.0.12",
+    "typeface-roboto": "^0.0.75",
+    "vue": "^2.6.10",
+    "vue-class-component": "^7.1.0",
+    "vue-property-decorator": "^8.2.2",
+    "winston": "^3.2.1",
+    "ws": "^7.1.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.18",
+    "@typescript-eslint/eslint-plugin": "^2.1.0",
+    "@typescript-eslint/parser": "^2.1.0",
+    "@vue/component-compiler-utils": "^3.0.0",
+    "electron": "^6.0.7",
+    "electron-builder": "^21.2.0",
+    "eslint": "^6.3.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-vue": "^5.2.3",
+    "jest": "^24.9.0",
+    "parcel-bundler": "^1.12.3",
+    "sass": "^1.22.10",
+    "typescript": "^3.6.2",
+    "vue-template-compiler": "^2.6.10"
+  }
+}
