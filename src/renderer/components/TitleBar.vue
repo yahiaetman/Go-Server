@@ -7,9 +7,9 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import Electron, { BrowserWindow } from 'electron'
+import Electron, { BrowserWindow } from 'electron';
 
 @Component
 export default class TitleBarComponent extends Vue {

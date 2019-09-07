@@ -10,8 +10,8 @@
             </div>
         </div>
         <div class="history-list">
-            <div v-for="i in 100" :key="i">
-                <span>{{i+1}}:</span>
+            <div v-for="i in 100" :key="i" class="history-item">
+                <span>{{i}}:</span>
                 <color-tag :color="i%2==0?'B':'W'"></color-tag>
                 <span>played A11</span>
             </div>
@@ -44,10 +44,10 @@ export default class HistoryComponent extends Vue {
 
 .history-container {
     margin-top: 48px;
-    margin-bottom: 24px;
+    margin-bottom: 8px;
     margin-left: 24px;
     margin-right: 24px;
-    height: calc(100% - 48px - 24px);
+    height: calc(100% - 48px - 8px);
     display: flex;
     flex-direction: column;
 }
@@ -58,12 +58,15 @@ export default class HistoryComponent extends Vue {
     flex-direction: row;
     justify-content: space-between;
     width: 100%;
+    margin-bottom: 16px;
 }
 
 .history-title {
     align-self: flex-start;
     font-size: 24px;
+    margin-bottom: -8px;
     user-select: none;
+    color: $color1;
 }
 
 .history-sync {
@@ -102,5 +105,24 @@ export default class HistoryComponent extends Vue {
     flex: 1 1 0;
     height: 0;
     overflow-y: scroll;
+}
+
+.history-list::-webkit-scrollbar {
+    width: 8px;
+}
+.history-list::-webkit-scrollbar-track {
+    background-color: $color4;
+    border-radius: 4px;
+}
+.history-list::-webkit-scrollbar-corner {
+    background-color: transparent;
+}
+.history-list::-webkit-scrollbar-thumb {
+    background-color: $color2;
+    border-radius: 4px;
+}
+
+.history-item {
+    margin: 8px;
 }
 </style>

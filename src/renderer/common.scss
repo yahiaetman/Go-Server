@@ -15,3 +15,8 @@
 /* Rules for using icons as white on a dark background. */
 .material-icons.md-light { color: $color5; }
 .material-icons.md-light.md-inactive { color: $color4; }
+
+//@import 'three-dots/sass/_variables.scss';
+//@import 'three-dots/sass/_mixins.scss';
+//@import 'three-dots/sass/_dots-typing.scss';
+@import 'three-dots/dist/three-dots.css';

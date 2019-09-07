@@ -17,9 +17,11 @@
     "production": "parcel build src/main/main.ts -d dist/main --target electron && parcel build src/renderer/index.html -d dist/renderer --target electron"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.138",
     "dateformat": "^3.0.3",
     "lodash": "^4.17.15",
     "material-design-icons": "^3.0.1",
+    "three-dots": "^0.1.2",
     "tocktimer": "^1.0.12",
     "typeface-roboto": "^0.0.75",
     "vue": "^2.6.10",

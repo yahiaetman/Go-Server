@@ -2,7 +2,9 @@
     <div class="window">
         <title-bar></title-bar>
         <div class="window-content">
-            <div class="main-area"></div>
+            <div class="main-area">
+                <game></game>
+            </div>
             <div class="side-area">
                 <div class="history-area">
                     <history></history>
@@ -12,6 +14,7 @@
                 </div>
             </div>
         </div>
+        <status-bar></status-bar>
     </div>  
 </template>
 
@@ -21,13 +24,16 @@ import { Component, Prop } from 'vue-property-decorator';
 import TitleBarComponent from './TitleBar.vue';
 import HistoryComponent from './History.vue';
 import RequestsComponent from './Requests.vue';
-import { importDeclaration } from '@babel/types';
+import StatusBarComponent from './StatusBar.vue';
+import GameComponent from './Game.vue';
 
 @Component({
     components:{
-        'title-bar': TitleBarComponent,
-        'history': HistoryComponent,
-        'requests': RequestsComponent
+        'title-bar' : TitleBarComponent,
+        'history' : HistoryComponent,
+        'requests' : RequestsComponent,
+        'status-bar' : StatusBarComponent,
+        'game' : GameComponent
     }
 })
 export default class AppComponent extends Vue {
@@ -58,15 +64,17 @@ export default class AppComponent extends Vue {
 };
 
 .main-area {
-    grid-area: 'main';
+    grid-area: main;
+    margin-bottom: 48px;
 }
 
 .side-area {
-    grid-area: 'side';
+    grid-area: side;
     background-color: $color3;
     border-radius: 0px 10px 10px 0px;
     display: flex;
     flex-direction: column;
+    margin-bottom: 8px;
 }
 
 .history-area {
