@@ -3,38 +3,40 @@
         <div class="requests-header">
             <div class="requests-title">
                 <span class="requests-title-text">REQUESTS</span>
-                <span class="requests-count">10</span>
+                <span class="requests-count">{{requests.length}}</span>
             </div>
             <i class="requests-burger material-icons" @click="toggleExpansion">
                 menu
             </i>
         </div>
-        <div class="requests-list" v-show="expanded">
-            <div v-for="i in 10" :key="i" class="request-item">
-                <div :class="['request-marker', {'dark':i%2==0}, {'light':i%2==1}]"></div>
-                <div class="request-name">Thomson Reuters Dodododo Baby Shark</div>
-                <div class="request-ip">999.999.999.999</div>
-                <div class="request-buttons">
-                    <div class="request-accept-button">
-                        <i class="material-icons">
-                            check
-                        </i>
-                        <span>1</span>
-                    </div>
-                    <div class="request-accept-button">
-                        <i class="material-icons">
-                            check
-                        </i>
-                        <span>2</span>
-                    </div>
-                    <div class="request-reject-button">
-                        <i class="material-icons">
-                            close
-                        </i>
+        <transition name="collapse">
+            <div class="requests-list" v-show="expanded">
+                <div v-for="(request, index) in requests" :key="index" class="request-item">
+                    <div :class="['request-marker', index%2==0?'dark':'light']"></div>
+                    <div class="request-name">{{request.name}}</div>
+                    <div class="request-ip">{{request.ip}}</div>
+                    <div class="request-buttons">
+                        <div class="request-accept-button" v-show="free[0]" @click="accept(request, 0)">
+                            <i class="material-icons">
+                                check
+                            </i>
+                            <span>1</span>
+                        </div>
+                        <div class="request-accept-button" v-show="free[1]" @click="accept(request, 1)">
+                            <i class="material-icons">
+                                check
+                            </i>
+                            <span>2</span>
+                        </div>
+                        <div class="request-reject-button" @click="reject(request)">
+                            <i class="material-icons">
+                                close
+                            </i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </transition>
     </div>    
 </template>
 
@@ -42,13 +44,28 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 
+interface Request {
+    name:string,
+    ip:string
+};
+
 @Component
 export default class RequestsComponent extends Vue {
     expanded: Boolean = false;
+    requests: Request[] = [
+        {name: "Spartans", ip:"127.0.0.1"},
+        {name: "Exodia", ip:"192.256.0.16"},
+        {name: "Dragon Warrior", ip:"132.90.121.13"},
+        {name: "PewDiePie", ip:"666.666.666.666"}
+    ];
+    free: boolean[] = [true, true];
 
     private toggleExpansion() : void {
         this.expanded = !this.expanded;
     }
+
+    private accept(request: Request, player: number){}
+    private reject(request: Request){}
 }
 </script>
 
@@ -119,6 +136,14 @@ export default class RequestsComponent extends Vue {
     height: 160px;
     overflow-y: scroll;
     margin-top: 8px;
+}
+
+.collapse-enter-active, .collapse-leave-active {
+  transition: height .5s;
+}
+
+.collapse-enter, .collapse-leave-to {
+  height: 0;
 }
 
 .requests-list::-webkit-scrollbar {

@@ -30,28 +30,34 @@
                 <hr class="info-line">
                 <div>
                     <span class="player-time">99:99:99.999</span>
-                    <div class="player-thinking dot-bricks"></div>
+                    <div class="dot-bricks player-thinking"></div>
                 </div>
-                <button class="disconnect-button">DISCONNECT (127.999.256.101)</button>
+                <button class="disconnect-button">
+                    <i class="material-icons md-dark" v-show="true">refresh</i>
+                    <span>DISCONNECT (127.999.256.101)</span>
+                </button>
             </div>
             <div class="game-info2">
                 <color-tag color="W"></color-tag>
                 <div class="player-name">Thomson Reuter</div>
                 <hr class="info-line">
                 <div>
-                    <div class="player-thinking dot-bricks"></div>
+                    <div class="dot-bricks player-thinking"></div>
                     <span class="player-time">00:24:12.012</span>
                 </div>
-                <button class="disconnect-button">DISCONNECT (127.999.256.101)</button>
+                <button class="disconnect-button">
+                    <i class="material-icons md-dark" v-show="true">refresh</i>
+                    <span>DISCONNECT (127.999.256.101)</span>
+                </button>
             </div>
             <div class="game-control-center">
                 <button class="big-round-button center-button">
                     <i class="material-icons">play_arrow</i>
                 </button>
-                <button class="small-round-button left-button">
+                <button class="small-round-button left-button" tooltip="Swap Players" data-tooltipleft="-50px">
                     <i class="material-icons">swap_horiz</i>
                 </button>
-                <button class="small-round-button right-button">
+                <button class="small-round-button right-button"  tooltip="Clear Board">
                     <i class="material-icons">clear_all</i>
                 </button>
                 <div class="game-time">99:99:99</div>
@@ -173,6 +179,8 @@ export default class GameComponent extends Vue {
     margin-bottom: 8px;
     margin-left: 32px;
     margin-right: 32px;
+    background-color: $color1;
+    color: $color1;
 }
 
 .disconnect-button {
@@ -181,8 +189,25 @@ export default class GameComponent extends Vue {
     background-color: $color3;
     color: $color2;
     border-radius: 10px;
-    padding: 4px 16px;
+    padding: 6px 16px 6px 8px;
     outline: none;
+    user-select: none;
+    cursor: pointer;
+}
+
+.disconnect-button > span {
+    margin-right: 8px;
+    vertical-align: middle !important;
+}
+
+.disconnect-button > i {
+    font-size: 18px;
+    margin-bottom: 2px;
+    vertical-align: middle !important;
+    animation-name: rotation;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
 }
 
 .disconnect-button:hover {

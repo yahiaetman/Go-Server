@@ -19,6 +19,8 @@
   "dependencies": {
     "@types/lodash": "^4.14.138",
     "dateformat": "^3.0.3",
+    "fp-ts": "^2.0.5",
+    "io-ts": "^2.0.1",
     "lodash": "^4.17.15",
     "material-design-icons": "^3.0.1",
     "three-dots": "^0.1.2",
@@ -32,6 +34,7 @@
   },
   "devDependencies": {
     "@types/jest": "^24.0.18",
+    "@types/tocktimer": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^2.1.0",
     "@typescript-eslint/parser": "^2.1.0",
     "@vue/component-compiler-utils": "^3.0.0",
@@ -43,6 +46,7 @@
     "jest": "^24.9.0",
     "parcel-bundler": "^1.12.3",
     "sass": "^1.22.10",
+    "ts-node": "^8.3.0",
     "typescript": "^3.6.2",
     "vue-template-compiler": "^2.6.10"
   }

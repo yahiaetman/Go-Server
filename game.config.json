@@ -1,0 +1,15 @@
+{
+    "initialState": {
+        "board": 19,
+        "players": {
+            "B": {"remainingTime": "15:00"},
+            "W": {"remainingTime": "15:00"}
+        },
+        "turn": "B"
+    },
+    "moveLog":[],
+    "komi": 6.5,
+    "ko": true,
+    "scoringMethod": "area",
+    "prisonerScore": 1
+}

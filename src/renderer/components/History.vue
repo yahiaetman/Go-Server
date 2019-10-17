@@ -10,10 +10,10 @@
             </div>
         </div>
         <div class="history-list">
-            <div v-for="i in 100" :key="i" class="history-item">
-                <span>{{i}}:</span>
-                <color-tag :color="i%2==0?'B':'W'"></color-tag>
-                <span>played A11</span>
+            <div v-for="(move, index) in moves" :key="index" class="history-item">
+                <span>{{(index+1).toString().padStart(3, "0")}}:</span>
+                <color-tag :color="index%2==0?'B':'W'"></color-tag>
+                <span>{{format(move)}}</span>
             </div>
         </div>
     </div>    
@@ -23,6 +23,7 @@
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator';
 import ColorTagComponent from './ColorTag.vue';
+import Move from '../../types/move';
 
 @Component({
     components: {
@@ -31,9 +32,31 @@ import ColorTagComponent from './ColorTag.vue';
 })
 export default class HistoryComponent extends Vue {
     synced: boolean = true;
+
+    moves: Move[] = [
+        {type: "play", point:{row:0, column:0}},
+        {type: "play", point:{row:3, column:11}},
+        {type: "play", point:{row:11, column:5}},
+        {type: "pass"},
+        {type: "play", point:{row:18, column:17}},
+        {type: "resign"},
+    ];
     
     private syncClick():void {
         this.synced = !this.synced;
+    }
+
+    private format(move: Move): string {
+        if(move.type == "play"){
+            let column: string = ['A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T'][move.point.column];
+            return `Played ${column}${move.point.row+1}`;
+        } else if(move.type == "pass"){
+            return "Passed";
+        } else if(move.type == "resign"){
+            return "Resigned";
+        } else {
+            return "";
+        }
     }
     
 }

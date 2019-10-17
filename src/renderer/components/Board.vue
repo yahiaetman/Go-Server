@@ -15,7 +15,7 @@
                 <line v-for="i in 19" :key="i" :x1="50" :y1="30+i*20" :x2="50+18*20" :y2="30+i*20" class="board-line"/>
             </g>
             <g>
-                <circle v-for="point in fixedPoints" :key="`Point(${point.row},${point.column})`" :cx="50+point.column*20" :cy="50+point.row*20" r="6" class="board-point"/>
+                <circle v-for="point in fixedHandicapPoints" :key="`Point(${point.row},${point.column})`" :cx="50+point.column*20" :cy="50+point.row*20" r="6" class="board-point"/>
             </g>
             <g>
                 <g>
@@ -33,10 +33,10 @@
             </g>
             <g>
                 <g>
-                    <circle v-for="piece in Pieces" :key="piece.key" :cx="50+20*piece.position.column" :cy="50+20*piece.position.row" r="10" filter="url(#shadow)"/>
+                    <circle v-for="stone in Stones" :key="stone.key" :cx="50+20*stone.position.column" :cy="50+20*stone.position.row" r="10" filter="url(#shadow)"/>
                 </g>
                 <g>
-                    <circle v-for="piece in Pieces" :key="piece.key" :cx="50+20*piece.position.column" :cy="50+20*piece.position.row" r="10" :class="[piece.class]"/>
+                    <circle v-for="stone in Stones" :key="stone.key" :cx="50+20*stone.position.column" :cy="50+20*stone.position.row" r="10" :class="[stone.class]"/>
                 </g>
             </g>
         </svg>
@@ -47,11 +47,11 @@
 import Vue from 'vue';
 import * as _ from 'lodash';
 import { Component, Prop } from 'vue-property-decorator';
-import Point from '../../types/point';
+import Point, { PointUtility } from '../../types/point';
 
 @Component
 export default class BoardComponent extends Vue {
-    fixedPoints: Point[] = [
+    fixedHandicapPoints: Point[] = [
         {row: 3, column: 3},
         {row: 3, column: 9},
         {row: 3, column: 15},
@@ -86,16 +86,15 @@ export default class BoardComponent extends Vue {
     ]
 
     getColumnName(index: number): string {
-        return ['A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T'][index];
+        return PointUtility.ColumnLabels[index];
     }
 
-    get Pieces(): {key:string, position:Point, class:string}[] {
-        let pieces = _.flatMap(this.board, (arr, row)=>_.map(arr, (cell, column)=>{
-            return cell==='.'?null:{key:`(${row},${column})`, position:{row:row, column:column}, class:cell==='B'?'black':'white'};
+    get Stones(): {key:string, position:Point, class:string}[] {
+        let stones = _.flatMap(this.board, (arr, row)=>_.map(arr, (cell, column)=>{
+            return {key:`(${row},${column})`, position:{row:row, column:column}, class:cell==='.'?'.':cell==='B'?'black':'white'};
         }));
-        pieces = _.filter(pieces, (el)=>el!==null);
-        console.log(pieces);
-        return pieces;
+        stones = _.filter(stones, (stone)=>stone.class!=='.');
+        return stones;
     }
 }
 </script>
