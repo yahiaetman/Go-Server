@@ -6,3 +6,4 @@ export { Time } from './time.codec';
 export { PlayerState } from './player-state.codec';
 export { GameState } from './game-state.codec';
 export { LogEntry, GameConfiguration } from './game-configuration.codec';
+export { ServerConfiguration } from './server-configuration.codec';

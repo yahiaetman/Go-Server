@@ -14,7 +14,8 @@
     "postinstall": "electron-builder install-app-deps",
     "watch:main": "parcel watch src/main/main.ts -d dist/main --target electron --no-hmr",
     "watch:renderer": "parcel watch src/renderer/index.html -d dist/renderer --public-url ./ --target electron --no-hmr",
-    "production": "parcel build src/main/main.ts -d dist/main --target electron && parcel build src/renderer/index.html -d dist/renderer --target electron"
+    "production": "parcel build src/main/main.ts -d dist/main --target electron && parcel build src/renderer/index.html -d dist/renderer --target electron",
+    "console-go": "ts-node ./src/examples/console-go.ts"
   },
   "dependencies": {
     "@types/lodash": "^4.14.138",
@@ -33,8 +34,10 @@
     "ws": "^7.1.2"
   },
   "devDependencies": {
+    "@types/dateformat": "^3.0.1",
     "@types/jest": "^24.0.18",
     "@types/tocktimer": "^1.0.1",
+    "@types/ws": "^6.0.4",
     "@typescript-eslint/eslint-plugin": "^2.1.0",
     "@typescript-eslint/parser": "^2.1.0",
     "@vue/component-compiler-utils": "^3.0.0",
@@ -44,10 +47,10 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-vue": "^5.2.3",
     "jest": "^24.9.0",
-    "parcel-bundler": "^1.12.3",
+    "parcel-bundler": "^1.12.4",
     "sass": "^1.22.10",
     "ts-node": "^8.3.0",
-    "typescript": "^3.6.2",
+    "typescript": "^3.7.2",
     "vue-template-compiler": "^2.6.10"
   }
 }

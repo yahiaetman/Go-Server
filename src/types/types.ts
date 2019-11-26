@@ -6,3 +6,4 @@ export { Time } from './time.type';
 export { PlayerState } from './player-state.type';
 export { GameState } from './game-state.type';
 export { EndGameInfo, LogEntry, GameConfiguration } from './game-configuration.type';
+export { ServerConfiguration } from './server-configuration.type';

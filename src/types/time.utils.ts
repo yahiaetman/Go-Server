@@ -1,4 +1,3 @@
-import assert from 'assert';
 import * as t from './time.type';
 
 // Parse timespans from human-readable format to milliseconds
@@ -6,7 +5,6 @@ import * as t from './time.type';
 // The format supports an optional negative sign for negative timespans
 export function Parse(str: string): t.Time | null {
     const matches = /^(-)?(?:([0-9]+):)?([0-9]+)(?:.([0-9]+))?$/.exec(str.trim());
-    assert.notEqual(matches, null, "Input doesn't match expected time format");
     if(matches != null){
         let time = +matches[3] * 1000;
         time += matches[4] ? (+matches[4] * (1000 / (10 ** matches[4].length))) : 0;

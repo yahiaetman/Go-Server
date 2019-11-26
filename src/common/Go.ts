@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Color, Move, Board, LogEntry, GameState, GameConfiguration } from '../types/types';
+import { Color, Move, Board, LogEntry, GameState, GameConfiguration, Point } from '../types/types';
 import * as ColorUtility from '../types/color.utils'
 import { PointUtility } from '../types/point.utils';
 import * as TimeUtility from '../types/time.utils';
@@ -56,7 +56,8 @@ export default class GoGame {
 
     public get Configuration(): GameConfiguration {
         let config = _.cloneDeep(this.configuration);
-        config.moveLog = []
+        config.moveLog = [];
+        config.idleDeltaTime = 0;
         let lastRemainingTime: number = 0;
         for(let entry of this.history){
             if(entry.type === "start"){
@@ -67,15 +68,10 @@ export default class GoGame {
                     move: entry.move,
                     deltaTime: lastRemainingTime - remainingTime
                 });
+                lastRemainingTime = remainingTime;
             }
         }
-        config.moveLog = this.history.reduce((result: LogEntry[], entry: HistoryEntry)=>{
-            if(entry.type == "move"){
-
-            }
-            return result;
-        }, []);
-        return this.configuration;
+        return config;
     }
 
     public static GetEmptyBoard(size: number): Board {
@@ -96,7 +92,8 @@ export default class GoGame {
                 },
                 turn: Color.BLACK
             },
-            moveLog: []
+            moveLog: [],
+            idleDeltaTime: 0
         };
     }
 
@@ -204,8 +201,11 @@ export default class GoGame {
             }
             return {valid: true};
         } else if(move.type === 'place'){
+            if(move.point.row < 0 || move.point.row >= this.BoardSize || move.point.column < 0 || move.point.column >= this.BoardSize){
+                return {valid: false, message: "Point is out of bound"};
+            }
             if(nextState.board[move.point.row][move.point.column] != Color.NONE){
-                return {valid: false, message: "Point is not Empty"}
+                return {valid: false, message: "Point is not Empty"};
             }
             nextState.board[move.point.row][move.point.column] = nextState.turn;
             let result = this.Analyze(nextState.board);
@@ -248,63 +248,56 @@ export default class GoGame {
     private Analyze(board: Board): {board: number[][], clusters: {color: Color, count: number, neighbors: {[index: string]:number}}[]}{
         const boardSize: number = this.BoardSize;
         let idCount: number = 0;
-        let idBoard: number[][] = _.times(boardSize, ()=>_.times(boardSize, ()=>0));
+        let idBoard: number[][] = _.times(boardSize, ()=>_.times(boardSize, ()=>-1));
+        let clusters: {color: Color, count: number, neighbors: {[index: string]:number}}[] = [];
+        let queue: Point[] = [];
+
+        const adjacency = ({row, column}: Point): Point[] => {
+            let adj = [];
+            if(row > 0) adj.push({row: row-1, column: column});
+            if(column > 0) adj.push({row: row, column: column-1});
+            if(row < boardSize-1) adj.push({row: row+1, column: column});
+            if(column < boardSize-1) adj.push({row: row, column: column+1});
+            return adj;
+        }
+        
         for(let row: number = 0; row < boardSize; row++){
             for(let column: number = 0; column <boardSize; column++){
-                let color: Color = board[row][column];
-                let id: number = idCount;
-                if(row > 0 && board[row-1][column]==color) id = Math.min(id, idBoard[row-1][column]);
-                if(column > 0 && board[row][column-1]==color) id = Math.min(id, idBoard[row][column-1]);
+                if(idBoard[row][column] != -1) continue;
+                let id: number = clusters.length;
                 idBoard[row][column] = id;
-                if(id == idCount) idCount++;
-            }
-        }
-        let idMap: {target: number, color: Color}[] = _.times(idCount, (index)=>({target:index, color:Color.NONE}));
-        for(let row: number = 0; row < boardSize; row++){
-            for(let column: number = 0; column < boardSize; column++){
-                let color: Color = board[row][column];
-                let id: number = idBoard[row][column];
-                if(row > 0 && board[row-1][column]==color) id = Math.min(id, idBoard[row-1][column]);
-                if(column > 0 && board[row][column-1]==color) id = Math.min(id, idBoard[row][column-1]);
-                if(row < boardSize-1 && board[row+1][column]==color) id = Math.min(id, idBoard[row+1][column]);
-                if(column < boardSize && board[row][column+1]==color) id = Math.min(id, idBoard[row][column+1]);
-                idMap[idBoard[row][column]]= {target: id, color: color};
-                idBoard[row][column] = id;
-            }
-        }
-        let clusters: {color: Color, count: number, neighbors: {[index: string]:number}}[] = [];
-        for(let index = 0; index < idCount; index++){
-            let idMapEntry: {target: number, color: Color} = idMap[index];
-            if(idMapEntry.target == index){
-                idMapEntry.target = clusters.length;
-                clusters.push({
-                    color: idMapEntry.color,
-                    count: 0,
+                const cluster: {color: Color, count: number, neighbors: {[index: string]:number}} = {
+                    color: board[row][column],
+                    count: 1,
                     neighbors: {[Color.NONE]:0, [Color.BLACK]:0, [Color.WHITE]:0}
-                });
-            } else {
-                idMapEntry.target = idMap[idMapEntry.target].target;
-            }
-        }
-        for(let row: number = 0; row < boardSize; row++){
-            for(let column: number = 0; column < boardSize; column++){
-                let color: Color = board[row][column];
-                let id: number = idMap[idBoard[row][column]].target;
-                let cluster = clusters[id];
-                cluster.count++;
-                if(row > 0 && board[row-1][column]!=color) cluster.neighbors[board[row-1][column]]++;
-                if(column > 0 && board[row][column-1]==color) cluster.neighbors[board[row][column-1]]++;
-                if(row < boardSize-1 && board[row+1][column]==color) cluster.neighbors[board[row+1][column]]++;
-                if(column < boardSize && board[row][column+1]==color) cluster.neighbors[board[row][column+1]]++;
-                idBoard[row][column] = id;
+                }
+                clusters.push(cluster);
+
+                queue.push({row: row, column: column});
+                while(queue.length > 0){
+                    const current = queue.shift();
+                    if(!current) continue;
+                    idBoard[current.row][current.column] = id;
+                    for(const neighbor of adjacency(current)){
+                        if(idBoard[neighbor.row][neighbor.column] == id) continue;
+                        const neighborColor = board[neighbor.row][neighbor.column]
+                        if(neighborColor === cluster.color){
+                            idBoard[neighbor.row][neighbor.column] = id;
+                            cluster.count++;
+                            queue.push(neighbor);
+                        } else {
+                            cluster.neighbors[neighborColor]++;
+                        }
+                    }
+                }
             }
         }
         return {board: idBoard, clusters: clusters};
     }
 
-    public toString(showTerritories: boolean = false): string {
+    public toString(showTerritories: boolean = false, overridestate?: GameState): string {
         const boardSize = this.BoardSize;
-        let state = this.CurrentState;
+        let state: GameState = overridestate ?? this.CurrentState;
         let board: string[][] = _.cloneDeep(state.board);
         if(showTerritories){
             let territories= this.Territories;
@@ -322,10 +315,10 @@ export default class GoGame {
             (color)=>`${colorNames[color]}: Score=${scores[color]}, Prisoners=${state.players[color].prisoners}, Time Remaining=${TimeUtility.Format(state.players[color].remainingTime)}`
             ).join("\n");
         let black = `Black: Score=${scores[Color.BLACK]}, Prisoners=${state.players[Color.BLACK]}, Time Remaining`
-        let header: string = '   ' + PointUtility.ColumnLabels.join() + '   \n';
+        let header: string = '   ' + PointUtility.ColumnLabels.slice(0, boardSize).join(' ') + '   \n';
         return header + _.map(board, (row, index)=>{
             const label = (index+1).toString().padStart(2,'0');
-            return label + ' ' + row.join() + ' ' + label;
-        }).join('\n') + '\n' + header + playersInfo + `Turn: ${colorNames[state.turn]}`;
+            return label + ' ' + row.join(' ') + ' ' + label;
+        }).join('\n') + '\n' + header + playersInfo + `\nTurn: ${colorNames[state.turn]}`;
     }
 };

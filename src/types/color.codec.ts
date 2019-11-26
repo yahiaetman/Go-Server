@@ -7,7 +7,7 @@ export const Color = new io.Type<t.Color, string, unknown>(
     (i: unknown, c: io.Context) => {
         if(typeof i === 'string') {
             switch(i.toUpperCase()){
-                case t.Color.WHITE: return io.success(t.Color.BLACK);
+                case t.Color.BLACK: return io.success(t.Color.BLACK);
                 case t.Color.WHITE: return io.success(t.Color.WHITE);
                 case t.Color.NONE: return io.success(t.Color.NONE);
                 default: return io.failure(i, c, `Unknown Color ${i}`);

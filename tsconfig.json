@@ -1,7 +1,10 @@
 {
     "compilerOptions": {
-        "module": "esnext",
-        "target": "esnext",
+        "target": "es6",
+        "lib": [
+            "esnext",
+            "dom"
+        ],
         "strict": true,
         "jsx": "preserve",
         "importHelpers": true,

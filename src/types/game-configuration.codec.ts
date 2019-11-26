@@ -3,6 +3,7 @@ import * as ioe from './io-ts.extensions';
 import { GameState } from './game-state.codec';
 import { Color } from './color.codec';
 import { Move } from './move.codec';
+import { Time } from './time.codec';
 
 export const EndGameInfo = io.interface({
     winner: Color,
@@ -12,7 +13,7 @@ export const EndGameInfo = io.interface({
 
 export const LogEntry = io.intersection([
     io.type({
-        deltaTime: ioe.withDefault(io.number, 0)
+        deltaTime: ioe.withDefault(Time, 0)
     }),
     io.partial({
         move: Move,
@@ -23,6 +24,7 @@ export const LogEntry = io.intersection([
 export const GameConfiguration = io.interface({
     initialState: GameState,
     moveLog: ioe.withDefault(io.array(LogEntry), []),
+    idleDeltaTime: ioe.withDefault(Time, 0),
     komi: ioe.withDefault(io.number, 6.5),
     ko: ioe.withDefault(io.boolean, true),
     scoringMethod: ioe.withDefault(io.union([io.literal('area'), io.literal('territory')]), 'area'),
