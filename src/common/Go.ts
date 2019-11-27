@@ -69,6 +69,17 @@ export default class GoGame {
                     deltaTime: lastRemainingTime - remainingTime
                 });
                 lastRemainingTime = remainingTime;
+            } else if(entry.type === "end") {
+                let remainingTime = _.sum(_.map(entry.state.players, (player)=>player.remainingTime));
+                config.moveLog.push({
+                    end: {
+                        reason: entry.info.reason,
+                        scores: entry.info.scores,
+                        winner: entry.info.winner
+                    },
+                    deltaTime: lastRemainingTime - remainingTime
+                });
+                lastRemainingTime = remainingTime;
             }
         }
         return config;
@@ -158,7 +169,7 @@ export default class GoGame {
         });
     }
 
-    public apply(move: Move, deltaTime: number): {valid: boolean, message?: string} {
+    public apply(move: Move, deltaTime: number): {valid: boolean, state: GameState, message?: string} {
         let state = this.CurrentState;
         let nextState: GameState = _.cloneDeep(state);
         nextState.players[nextState.turn].remainingTime -= deltaTime;
@@ -177,7 +188,7 @@ export default class GoGame {
                     scores: this.Scores
                 }
             });
-            return {valid: true};
+            return {valid: true, state: nextState};
         } else if(move.type === 'pass'){
             nextState.turn = ColorUtility.FlipColor(nextState.turn);
             nextState.players[nextState.turn].prisoners++;
@@ -199,13 +210,13 @@ export default class GoGame {
                     }
                 });
             }
-            return {valid: true};
+            return {valid: true, state: nextState};
         } else if(move.type === 'place'){
             if(move.point.row < 0 || move.point.row >= this.BoardSize || move.point.column < 0 || move.point.column >= this.BoardSize){
-                return {valid: false, message: "Point is out of bound"};
+                return {valid: false, state: this.CurrentState, message: "Out of Bound"};
             }
             if(nextState.board[move.point.row][move.point.column] != Color.NONE){
-                return {valid: false, message: "Point is not Empty"};
+                return {valid: false, state: this.CurrentState, message: "Nonempty point"};
             }
             nextState.board[move.point.row][move.point.column] = nextState.turn;
             let result = this.Analyze(nextState.board);
@@ -227,11 +238,11 @@ export default class GoGame {
             }
             if(!killed){
                 if(result.clusters[result.board[move.point.row][move.point.column]].neighbors[Color.NONE]==0){
-                    return {valid: false, message: 'Suicide is not allowed'};
+                    return {valid: false, state: this.CurrentState, message: 'Suicide'};
                 }
             }
             if(this.configuration.ko && this.history.length >= 2 && _.isEqual(this.history[this.history.length-2].state.board, nextState.board)){
-                return {valid: false, message: 'You cannot do a move that returns to the previous board configuration (Ko rule)'};
+                return {valid: false, state: this.CurrentState, message: 'Ko'};
             }
             nextState.turn = nexTurn;
             this.history.push({
@@ -239,9 +250,9 @@ export default class GoGame {
                 state: nextState,
                 move: move
             })
-            return {valid: true};
+            return {valid: true, state: nextState};
         } else {
-            return {valid: false, message: `Action ${JSON.stringify(move)} is invalid`};
+            return {valid: false, state: this.CurrentState, message: "Invalid type"};
         }
     }
 

@@ -16,7 +16,8 @@ enum ManagerState {
 interface ManagerOptions {
     logger?: winston.Logger,
     tick?: ()=>void,
-    end?: ()=>void
+    end?: (reason: "resign" | "pass" | "timeout")=>void,
+    reload?: ()=>void
 }
 
 export default class GameManager {
@@ -43,14 +44,20 @@ export default class GameManager {
         
         fs.watch(".", (event, filename) => {
             if(filename == path.basename(GameManager.GameConfigPath)) this.configLayers.configFile = this.readConfig(GameManager.GameConfigPath);
-            if(this.state !== ManagerState.PLAYING && this.volatile) this.game.Configuration = this.Configuration;
+            if(this.state !== ManagerState.PLAYING && this.volatile) {
+                this.game.Configuration = this.Configuration;
+                options?.reload?.();
+            }
         });
         const checkpointsFolderPath = path.dirname(GameManager.CheckpointPath);
         if(!fs.existsSync(checkpointsFolderPath))
             fs.mkdirSync(checkpointsFolderPath);
         fs.watch(checkpointsFolderPath, (event, filename) => {
             if(filename == path.basename(GameManager.CheckpointPath)) this.configLayers.configFile = this.readConfig(GameManager.CheckpointPath);
-            if(this.state !== ManagerState.PLAYING && this.volatile) this.game.Configuration = this.Configuration;
+            if(this.state !== ManagerState.PLAYING && this.volatile) {
+                this.game.Configuration = this.Configuration;
+                options?.reload?.();
+            }
         });
 
         this.game = new GoGame(this.Configuration);
@@ -74,7 +81,7 @@ export default class GameManager {
     private saveCheckpoint() {
         let config = this.game.Configuration;
         config.idleDeltaTime = this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime - this.timer.lap();
-        fs.writeFileSync(GameManager.CheckpointPath, JSON.stringify(this.game.Configuration, null, 4));
+        fs.writeFileSync(GameManager.CheckpointPath, JSON.stringify(config, null, 4));
     }
 
     private clearCheckpoint() {
@@ -118,12 +125,12 @@ export default class GameManager {
     }
 
     public stop() {
-        this.timer.stop();
+        this.timer.pause();
         this.saveCheckpoint();
     }
 
-    public apply(move: Move): {valid: boolean, message?: string} {
-        if(this.state != ManagerState.PLAYING) return {valid: false};
+    public apply(move: Move) {
+        if(this.state != ManagerState.PLAYING) return {valid: false, state: this.game.CurrentState, message:"No Game"};
 
         this.timer.pause();
         let result = this.game.apply(move, this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime - this.timer.lap());
@@ -135,8 +142,9 @@ export default class GameManager {
             this.timer.pause();
         }
         if(this.game.HasGameEnded) {
+            this.timer.stop();
             this.archiveCheckpoint();
-            process.nextTick(()=>this.options.end?.());
+            process.nextTick(()=>this.options.end?.(this.game.EndGameInfo?.reason ?? "pass"));
         }
         return result;
     }
@@ -147,10 +155,11 @@ export default class GameManager {
 
     private timeout(){
         if(this.state == ManagerState.PLAYING){
+            this.timer.stop();
             this.game.timeout();
             this.archiveCheckpoint();
             this.state = ManagerState.READY;
-            this.options.end?.();
+            this.options.end?.("timeout");
         }
     }
 
@@ -166,6 +175,10 @@ export default class GameManager {
 
     public get HasGameEnded(): boolean {
         return this.game.HasGameEnded;
+    }
+
+    public get Scores() {
+        return this.game.Scores;
     }
 
     public toString(showTerritories: boolean = false): string {

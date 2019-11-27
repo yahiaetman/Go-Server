@@ -2,8 +2,7 @@
     "compilerOptions": {
         "target": "es6",
         "lib": [
-            "esnext",
-            "dom"
+            "esnext"
         ],
         "strict": true,
         "jsx": "preserve",

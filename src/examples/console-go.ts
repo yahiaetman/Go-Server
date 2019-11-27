@@ -36,9 +36,6 @@ rl.prompt();
 rl.on("line", (input: string) => {
     let move: Move;
     let args = input.toLowerCase().trim().split(/\s+/, 2);
-    if(args.length < 1 || args.length > 2){
-        
-    }
     switch(args[0] ?? ''){
         case 'pass':
             move = {type: 'pass'};
@@ -48,7 +45,7 @@ rl.on("line", (input: string) => {
             break;
         case 'place':
             if(args.length < 2){
-                console.error("Please enter an empty point");
+                console.error("Please enter a point");
                 rl.prompt();
                 return;
             }
