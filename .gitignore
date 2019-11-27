@@ -62,3 +62,7 @@ jspm_packages/
 
 # build results
 dist/
+
+# custom
+checkpoints/
+logs/
