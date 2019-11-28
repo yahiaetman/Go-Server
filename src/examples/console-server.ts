@@ -1,7 +1,31 @@
 import _ from 'lodash';
+import fs from 'fs';
 import readline from 'readline';
+import winston from 'winston';
+import dateFormat from 'dateformat';
 import { Server } from "../main/server";
 import { Color } from '../types/types';
+
+if (!fs.existsSync('./logs/')) fs.mkdirSync('./logs/');
+
+let logger = winston.createLogger({
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`),
+    ),
+    transports: [
+        new winston.transports.File({
+        filename: `./logs/output-${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}.log`,
+        handleExceptions: true,
+        }),
+    ],
+    exitOnError: (err: Error) => {
+        console.log(`${err.name} occurred. See logs for more info`);
+        return false;
+    }
+});
+
+logger.info('Starting Application ...');
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -9,31 +33,36 @@ const rl = readline.createInterface({
     prompt: 'SERVER> '
 });
 
+function displayGameState(){
+    console.log();
+    console.log("Game State:");
+    console.log(server.GameManager.toString(true));
+}
+
+function displayClients(){
+    console.log();
+    console.log("Clients:");
+    server.Clients.forEach((client)=>{
+        console.log(`   ${client.id}: ${client.name} (${client.address})`);
+    });
+    console.log("Players:");
+    _.forEach(server.Players, (player, color)=>{
+        if(player == null){
+            console.log(`   ${color}: None`);
+        } else {
+            console.log(`   ${player.color} => ${player.id}: ${player.name} (${player.address})`);
+        }
+    });
+}
+
 let server = new Server({
+    logger: logger,
     gameUpdate: ()=>{
-        console.log();
-        console.log("Game State:");
-        console.log(server.GameManager.toString(true));
+        displayGameState();
         rl.prompt();
     },
-    serverUpdate: ()=>{
-        console.log();
-        console.log("Clients:");
-        server.Clients.forEach((client)=>{
-            console.log(`${client.id}: ${client.name} (${client.ip})`);
-        });
-        console.log("Players:");
-        const players = server.Players;
-        _.forEach(server.Players, (player, color)=>{
-            if(player == null){
-                console.log(`${color}: None`);
-            } else {
-                console.log(`${player.color} => ${player.id}: ${player.name} (${player.ip})`);
-            }
-        });
-        rl.prompt();
-    },
-    statusUpdate: (message)=>{ console.log(`\nStatus: ${message}`); rl.prompt(); }
+    serverUpdate: ()=>{},
+    statusUpdate: (message)=>{ readline.cursorTo(process.stdout, 0); console.log(`Status: ${message}`); rl.prompt(); }
 });
 
 function getClientByID(id: number){ return server.Clients.find((client)=>client.id == id); }
@@ -42,22 +71,31 @@ rl.on('line', (input)=>{
     let commands = input.trim().split(/\s+/);
     if(commands.length == 0) return;
     switch(commands[0]){
-        case "a": case "enlist":{
+        case "j": case "join":{
             let client = getClientByID(Number.parseInt(commands[1]));
             if(client)
-                server.enlist(client, commands[2]==="w"?Color.WHITE:Color.BLACK);
+                server.join(client, commands[2]==="w"?Color.WHITE:Color.BLACK);
             break;
         }
-        case "r": case "discharge":{
+        case "l": case "leave":{
             let client = getClientByID(Number.parseInt(commands[1]));
             if(client)
-                server.discharge(client);
+                server.leave(client);
             break;
         }
         case "d": case "disconnect":{
             let client = getClientByID(Number.parseInt(commands[1]));
             if(client)
                 server.disconnect(client);
+            break;
+        }
+        case "v": case "view":{
+            switch(commands[1]){
+                case "state": displayGameState(); break;
+                case "clients": displayClients(); break;
+                default: console.log("Unknown command"); break;
+            };
+            rl.prompt();
             break;
         }
         case "swap":{
@@ -70,6 +108,28 @@ rl.on('line', (input)=>{
         }
         case "stop":{
             server.stop();
+            break;
+        }
+        case "clear":{
+            server.GameManager.clearCheckpoint();
+            break;
+        }
+        case "h": case "help":{
+            console.log("Command List:");
+            console.log("   - join <client-id> <color>");
+            console.log("   - leave <client-id>");
+            console.log("   - disconnect <client-id>");
+            console.log("   - swap");
+            console.log("   - view <state | clients>");
+            console.log("   - start");
+            console.log("   - stop");
+            console.log("   - clear");
+            rl.prompt();
+            break;
+        }
+        default:{
+            console.log(`Unknown command ${commands[0]}`);
+            rl.prompt();
             break;
         }
     }

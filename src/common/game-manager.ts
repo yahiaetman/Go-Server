@@ -21,6 +21,7 @@ interface ManagerOptions {
 }
 
 export default class GameManager {
+    private options: ManagerOptions;
     private configLayers: { 
         configFile: GameConfiguration | null,
         checkpointFile: GameConfiguration | null,
@@ -32,18 +33,22 @@ export default class GameManager {
     private game: GoGame;
     private volatile: boolean;
 
-    private options: ManagerOptions;
+    private logger?: winston.Logger;
 
     static readonly CheckpointPath: string = "./checkpoints/checkpoint.json";
     static readonly GameConfigPath: string = "./game.config.json";
 
     public constructor(options?: ManagerOptions){
         this.options = options ?? {};
+        this.logger = this.options.logger;
         this.configLayers.configFile = this.readConfig(GameManager.GameConfigPath);
         this.configLayers.checkpointFile = this.readConfig(GameManager.CheckpointPath);
         
         fs.watch(".", (event, filename) => {
-            if(filename == path.basename(GameManager.GameConfigPath)) this.configLayers.configFile = this.readConfig(GameManager.GameConfigPath);
+            if(filename == path.basename(GameManager.GameConfigPath)) {
+                this.logger?.info?.(`File "./game.config.json" fired a watch event ${event}, reloading configuration`);
+                this.configLayers.configFile = this.readConfig(GameManager.GameConfigPath);
+            }
             if(this.state !== ManagerState.PLAYING && this.volatile) {
                 this.game.Configuration = this.Configuration;
                 options?.reload?.();
@@ -53,7 +58,10 @@ export default class GameManager {
         if(!fs.existsSync(checkpointsFolderPath))
             fs.mkdirSync(checkpointsFolderPath);
         fs.watch(checkpointsFolderPath, (event, filename) => {
-            if(filename == path.basename(GameManager.CheckpointPath)) this.configLayers.configFile = this.readConfig(GameManager.CheckpointPath);
+            if(filename == path.basename(GameManager.CheckpointPath)) {
+                this.logger?.info?.(`File "./checkpoints/checkpoint.json" fired a watch event ${event}, reloading configuration`);
+                this.configLayers.configFile = this.readConfig(GameManager.CheckpointPath);
+            }
             if(this.state !== ManagerState.PLAYING && this.volatile) {
                 this.game.Configuration = this.Configuration;
                 options?.reload?.();
@@ -71,29 +79,39 @@ export default class GameManager {
                 const configObject = JSON.parse(fs.readFileSync(filePath, 'utf8'));
                 const result = c.GameConfiguration.decode(configObject);
                 if(result._tag != 'Left') return result.right;
-                else return null;
+                else {
+                    this.logger?.error?.(`Failed to decode "${filePath}"`);
+                    return null;
+                }
             } catch (error) {
+                this.logger?.error?.(`Failed to read/parse "${filePath}" due to ${error}`);
                 return null;
             }
         } else return null;
     }
 
     private saveCheckpoint() {
+        this.logger?.info?.(`Saving a checkpoint...`);
         let config = this.game.Configuration;
         config.idleDeltaTime = this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime - this.timer.lap();
         fs.writeFileSync(GameManager.CheckpointPath, JSON.stringify(config, null, 4));
     }
 
-    private clearCheckpoint() {
-        this.volatile = true;
-        if(fs.existsSync(GameManager.CheckpointPath)){
-            const discardedPath = path.join(path.dirname(GameManager.CheckpointPath), `discarded-${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}.json`);
-            fs.renameSync(GameManager.CheckpointPath, discardedPath);
+    public clearCheckpoint() {
+        if(this.state == ManagerState.READY){
+            this.logger?.info?.(`Clearing the checkpoint...`);
+            this.volatile = true;
+            if(fs.existsSync(GameManager.CheckpointPath)){
+                const discardedPath = path.join(path.dirname(GameManager.CheckpointPath), `discarded-${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}.json`);
+                fs.renameSync(GameManager.CheckpointPath, discardedPath);
+            }
+            this.options.reload?.();
         }
     }
 
     private archiveCheckpoint(){
         const filepath = path.join(path.dirname(GameManager.CheckpointPath), `archive-${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}.json`);
+        this.logger?.info?.(`Archiving the checkpoint to ${filepath}`);
         fs.writeFileSync(filepath, JSON.stringify(this.game.Configuration, null, 4));
         if(fs.existsSync(GameManager.CheckpointPath)){
             fs.unlinkSync(GameManager.CheckpointPath);
@@ -142,6 +160,7 @@ export default class GameManager {
             this.timer.pause();
         }
         if(this.game.HasGameEnded) {
+            this.logger?.info?.(`Game has ended.`);
             this.timer.stop();
             this.archiveCheckpoint();
             process.nextTick(()=>this.options.end?.(this.game.EndGameInfo?.reason ?? "pass"));
@@ -155,6 +174,7 @@ export default class GameManager {
 
     private timeout(){
         if(this.state == ManagerState.PLAYING){
+            this.logger?.info?.(`Timeout.`);
             this.timer.stop();
             this.game.timeout();
             this.archiveCheckpoint();
@@ -165,7 +185,10 @@ export default class GameManager {
 
     public get CurrentState(): GameState {
         let state = _.cloneDeep(this.game.CurrentState);
-        state.players[state.turn].remainingTime = this.timer.lap();
+        if(this.state == ManagerState.PLAYING)
+            state.players[state.turn].remainingTime = this.timer.lap();
+        else
+            state.players[state.turn].remainingTime -= this.Configuration.idleDeltaTime;
         return state;
     }
 

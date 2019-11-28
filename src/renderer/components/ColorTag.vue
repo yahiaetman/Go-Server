@@ -7,7 +7,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import Color from '../../types/colors';
+import { Color } from '../../types/types';
 
 @Component
 export default class ColorTagComponent extends Vue {

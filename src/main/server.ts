@@ -10,6 +10,8 @@ import { Either } from 'fp-ts/lib/Either';
 import { Errors, object } from 'io-ts';
 import GameManager from '../common/game-manager';
 import { FlipColor } from '../types/color.utils';
+import { PointUtility } from '../types/point.utils';
+import * as TimeUtility from '../types/time.utils';
 
 enum ServerState {
     INIT,
@@ -19,7 +21,7 @@ enum ServerState {
 interface Client {
     id: number,
     name: string,
-    ip: string,
+    address: string,
     socket: WebSocket,
     ready: boolean,
     alive: boolean,
@@ -42,11 +44,11 @@ type ServerEvent = {
     type: "END", // The game ended for one of the reasons found in enum EndReasons
     reason: "resign" | "pass" | "timeout" | "pause" | "error"
 } | {
-    type: "ENLIST", // A Client is added as a player
+    type: "JOIN", // A Client is added as a player
     client: Client,
     color: types.Color
 } | {
-    type: "DISCHARGE", // A Client is removed from the player list
+    type: "LEAVE", // A Client is removed from the player list
     client: Client
 } | {
     type: "DISCONNECT", // The User pressed disconnect for one of the clients
@@ -76,6 +78,8 @@ export class Server {
     private heartbeat: NodeJS.Timeout;
 
     private gameManager: GameManager;
+
+    private logger?: winston.Logger;
     
     static readonly ConfigPath: string = './server.config.json';
     
@@ -84,14 +88,15 @@ export class Server {
 
     constructor(options?: ServerOptions){
         this.options = options ?? {};
+        this.logger = this.options.logger;
 
         if(fs.existsSync(Server.ConfigPath)){
             try {
                 let result = codecs.ServerConfiguration.decode(JSON.parse(fs.readFileSync(Server.ConfigPath, 'utf8')));
                 if(result._tag == 'Right') this.configuration = result.right;
-                else { /*TODO: Log problem*/ }
+                else { this.logger?.error("Failed to decode server configuration, Reverting to default configuration."); }
             } catch (error) {
-                //TODO: Log exception
+                this.logger?.error("Failed to load server configuration, Reverting to default configuration.");
             }
         }
 
@@ -101,24 +106,26 @@ export class Server {
         });
 
         this.server.on("listening", ()=>{
-            //TODO: log
+            this.logger?.info(`Server is listening to ${this.configuration.host}:${this.configuration.port}`);
             this.options.statusUpdate?.(`Server is listening to ${this.configuration.host}:${this.configuration.port}`);
         });
         this.server.on("connection", (socket, request)=>{
             let client: Client = {
                 id: Server.generateID(),
                 name: "",
-                ip: request.connection.remoteAddress??"",
+                address: request.connection.remoteAddress??"",
                 socket: socket,
                 alive: true,
                 ready: false,
                 color: types.Color.NONE
             };
+            this.logger?.info?.(`Connection request from ${client.address}`);
             socket.on("pong", ()=>{
                 client.alive = true;
             });
             socket.send(JSON.stringify({type:"NAME"}));
             socket.on("message", (data)=>{
+                this.logger?.info(`Received ${data} message from ${client.name} (${client.address})`);
                 let result: Either<Errors, MessageTypes.ClientMessage> = MessageCodecs.ClientMessage.decode(JSON.parse(data.toString()));
                 if(result._tag == "Right"){
                     let message = result.right;
@@ -126,7 +133,7 @@ export class Server {
                         if(message.type == 'MOVE'){
                             this.processEvent({ type:"MESSAGE", client: client, message: message });
                         } else {
-                            //TODO: Log
+                            this.logger?.error(`Unexpected ${message.type} message from ${client.name} (${client.address})`);
                         }
                     } else {
                         if(message.type == 'NAME'){
@@ -135,22 +142,23 @@ export class Server {
                             this.clients.push(client);
                             this.processEvent({type:"CONNECT", client: client});
                         } else {
-                            //TODO: Log
+                            this.logger?.error(`Unexpected ${message.type} message from ${client.address}`);
                         }
                     }
                 } else {
-                    //TODO: log faulty message
+                    this.logger?.error(`Undecodable message from ${client.name} (${client.address})`);
                     this.options.statusUpdate?.(`Invalid message format received`);
                 }
             });
 
             socket.on("close", (code, reason) => {
+                this.logger?.warn(`Websocket connection closed with ${client.address} (${client.name}): ${code} - ${reason}`);
                 this.processEvent({type:"CLOSE", client: client});
             });
 
             socket.on("error", (err) => {
                 // Any error will automatically fire a close event after it is done
-                //TODO: log
+                this.logger?.error(`Websocket error from ${client.address} (${client.name}): ${err.name}: ${err.message}`);
             });
         });
 
@@ -160,7 +168,7 @@ export class Server {
                     client.alive = false;
                     client.socket.ping(() => {});
                 } else {
-                    //TODO: Log disconnection
+                    this.logger?.warn(`Client ${client.address} (${client.name}) missed the heartbeat. Terminating connection...`);
                     client.socket.terminate();
                 }
             }
@@ -168,9 +176,9 @@ export class Server {
 
         this.gameManager = new GameManager({
             logger: this.options.logger,
-            tick: ()=>{},
+            tick: ()=>{ this.options.gameUpdate?.() },
             end: (reason)=>{ this.processEvent({type:"END", reason:reason}); },
-            reload: ()=>{this.options.gameUpdate?.()}
+            reload: ()=>{ this.options.gameUpdate?.() }
         });
     }
 
@@ -202,12 +210,12 @@ export class Server {
         this.processEvent({type:"END", reason:"pause"});
     }
 
-    public enlist(client: Client, color: types.Color){
-        this.processEvent({type:"ENLIST", client:client, color:color});
+    public join(client: Client, color: types.Color){
+        this.processEvent({type:"JOIN", client:client, color:color});
     }
 
-    public discharge(client: Client){
-        this.processEvent({type:"DISCHARGE", client:client});
+    public leave(client: Client){
+        this.processEvent({type:"LEAVE", client:client});
     }
 
     public swap(){
@@ -222,8 +230,9 @@ export class Server {
         if(this.state == ServerState.INIT){
             switch(event.type){
                 case "CONNECT":{
+                    this.logger?.info(`Welcome, ${event.client.name}@${event.client.address}`);
+                    this.options.statusUpdate?.(`Welcome, ${event.client.name}@${event.client.address}`);
                     this.options.serverUpdate?.();
-                    //TODO: log
                     break;
                 }
                 case "CLOSE":{
@@ -231,28 +240,31 @@ export class Server {
                     if(index != -1){
                         this.clients.splice(index, 1);
                     }
+                    this.logger?.info(`Goodbye, ${event.client.name}@${event.client.address}`);
+                    this.options.statusUpdate?.(`Goodbye, ${event.client.name}@${event.client.address}`);
                     this.options.serverUpdate?.();
-                    //TODO: log
                     break;
                 }
-                case "ENLIST":{
+                case "JOIN":{
                     let players = this.Players;
                     let colorHolder = players[event.color];
                     if(colorHolder != null) colorHolder.color = types.Color.NONE;
                     event.client.color = event.color;
+                    this.logger?.info(`${event.client.name}@${event.client.address} joined as Player ${event.color}`);
+                    this.options.statusUpdate?.(`${event.client.name}@${event.client.address} joined as Player ${event.color}`);
                     this.options.serverUpdate?.();
-                    //TODO: log
                     break;
                 }
-                case "DISCHARGE":{
+                case "LEAVE":{
+                    this.logger?.info(`${event.client.name}@${event.client.address} left their position as a Player ${event.client.color}`);
+                    this.options.statusUpdate?.(`${event.client.name}@${event.client.address} left their position as a Player ${event.client.color}`);
                     event.client.color = types.Color.NONE;
                     this.options.serverUpdate?.();
-                    //TODO: log
                     break;
                 }
                 case "DISCONNECT":{
+                    this.logger?.info(`Server forcefully disconnected ${event.client.name}@${event.client.address}`);
                     event.client.socket.close(1000, 'Server disconnected you');
-                    //TODO: log
                     break;
                 }
                 case "SWAP":{
@@ -260,34 +272,43 @@ export class Server {
                         if(client.color == types.Color.BLACK) client.color = types.Color.WHITE;
                         else if(client.color == types.Color.WHITE) client.color = types.Color.BLACK;
                     }
+                    this.logger?.info(`Server swapped the players' colors`);
+                    this.options.statusUpdate?.(`Server swapped the players' colors`);
                     this.options.serverUpdate?.();
-                    //TODO: log
                     break;
                 }
                 case "START":{
+                    this.logger?.info(`Server requested to start a game`);
                     if(this.Ready){
                         this.state = ServerState.IDLE;
                         let players = this.Players;
-                        _.forEach(this.Players, (player, color)=>{
+                        _.forEach(players, (player, color)=>{
                             player?.socket.send(JSON.stringify({ type: "START", configuration: this.gameManager.Configuration, color: color}));
                         });
                         this.gameManager.start();
+                        this.logger?.info("\n" + _.repeat(_.repeat("#", 80) + "\n", 4));
+                        this.logger?.info("Starting a game");
+                        _.forEach(players, (player, color)=>{
+                            if(player != null) this.logger?.info(`Player ${color}: ${player.name}@${player.address}`);
+                        });
+                        this.logger?.info("\n" + this.gameManager.toString());
+                        this.options.statusUpdate?.(`Game started`);
                         this.options.gameUpdate?.();
-                        //TODO: log
                     } else {
-                        //TODO: log
+                        this.logger?.warn(`Cannot start a game without 2 players.`);
                     }
                     break;
                 }
                 default:{
-                    //TODO: Log inacceptable event
+                    this.logger?.warn(`Unexpected ${event.type} event in state INIT`);
                 }
             }
         } else if(this.state == ServerState.IDLE){
             switch(event.type){
                 case "CONNECT":{
+                    this.logger?.info(`Welcome, ${event.client.name}@${event.client.address}`);
+                    this.options.statusUpdate?.(`Welcome, ${event.client.name}@${event.client.address}`);
                     this.options.serverUpdate?.();
-                    //TODO: log
                     break;
                 }
                 case "CLOSE":{
@@ -296,10 +317,12 @@ export class Server {
                         this.clients.splice(index, 1);
                     }
                     if(event.client.color != types.Color.NONE){
+                        this.logger?.info(`Player ${event.client.color} is disconnected, Have to stop the game.`);
                         process.nextTick(()=>{this.processEvent({type:"END", reason:"error"})});
                     }
+                    this.logger?.info(`Goodbye, ${event.client.name}@${event.client.address}`);
+                    this.options.statusUpdate?.(`Goodbye, ${event.client.name}@${event.client.address}`);
                     this.options.serverUpdate?.();
-                    //TODO: log
                     break;
                 }
                 case "DISCONNECT":{
@@ -308,10 +331,16 @@ export class Server {
                     break;
                 }
                 case "END":{
-                    let message = {
+                    let message: {
+                        type: "END",
+                        reason: string,
+                        winner: types.Color,
+                        players: {[name: string]: {score: number, remainingTime: number}}
+
+                    } = {
                         type: "END",
                         reason: event.reason,
-                        winner: ".",
+                        winner: types.Color.NONE,
                         players: {}
                     };
                     if(event.reason == "error" || event.reason == "pause") {
@@ -339,28 +368,56 @@ export class Server {
                             player.socket.send(JSON.stringify(message));
                         }
                     }
+                    this.state = ServerState.INIT;
+                    this.logger?.info?.(`Game ending for the reason: ${message.reason}`);
+                    this.logger?.info?.(`Winner: ${message.winner}`);
+                    this.logger?.info?.(`B => Score: ${message.players[types.Color.BLACK].score}, Remaining Time: ${TimeUtility.Format(message.players[types.Color.BLACK].remainingTime)}`);
+                    this.logger?.info?.(`W => Score: ${message.players[types.Color.WHITE].score}, Remaining Time: ${TimeUtility.Format(message.players[types.Color.WHITE].remainingTime)}`);
+                    this.options.statusUpdate?.(`Game ending for the reason: ${message.reason}`);
                     this.options.gameUpdate?.();
-                    //TODO: log
                     break;
                 }
                 case "MESSAGE":{
                     let turn = this.gameManager.CurrentState.turn;
-                    let other = FlipColor(turn);
-                    let players = this.Players;
-                    let result = this.gameManager.apply(event.message.move);
-                    let remainingTime = _.mapValues(result.state.players, (value)=>value.remainingTime);
-                    if(result.valid){
-                        players[turn]?.socket?.send?.(JSON.stringify({type:"VALID", remainingTime:remainingTime}));
-                        players[other]?.socket?.send?.(JSON.stringify({type:"MOVE", move:event.message.move, remainingTime:remainingTime}));
+                    let status = "";
+                    if(event.client.color == turn){
+                        switch(event.message.move.type){
+                            case "pass": 
+                                this.logger?.info?.(`Player ${event.client.color} (${event.client.name}@${event.client.address}) passed their turn`);
+                                status = `Player ${event.client.color}: Pass`;
+                                break;
+                            case "resign":
+                                this.logger?.info?.(`Player ${event.client.color} (${event.client.name}@${event.client.address}) resigned`);
+                                status = `Player ${event.client.color}: Resign`;
+                                break;
+                            case "place":
+                                this.logger?.info?.(`Player ${event.client.color} (${event.client.name}@${event.client.address}) placed a stone at ${PointUtility.Format(event.message.move.point)}`);
+                                status = `Player ${event.client.color}: Stone at ${PointUtility.Format(event.message.move.point)}`;
+                                break;
+                        }
+                        let other = FlipColor(turn);
+                        let players = this.Players;
+                        let result = this.gameManager.apply(event.message.move);
+                        let remainingTime = _.mapValues(result.state.players, (value)=>value.remainingTime);
+                        if(result.valid){
+                            this.logger?.info("Move accepted");
+                            status += ` (Accepted)`;
+                            players[turn]?.socket?.send?.(JSON.stringify({type:"VALID", remainingTime:remainingTime}));
+                            players[other]?.socket?.send?.(JSON.stringify({type:"MOVE", move:event.message.move, remainingTime:remainingTime}));
+                        } else {
+                            status += ` (Rejected: ${result.message})`;
+                            this.logger?.info(`Move rejected for the reason: ${result.message}`);
+                            players[turn]?.socket?.send?.(JSON.stringify({type:"INVALID", message:result.message, remainingTime:remainingTime}));
+                        }
+                        this.options.statusUpdate?.(status);        
+                        this.options.gameUpdate?.();
                     } else {
-                        players[turn]?.socket?.send?.(JSON.stringify({type:"INVALID", message:result.message, remainingTime:remainingTime}));
+                        this.logger?.warn?.(`Received a MOVE message from ${event.client.color} => ${event.client.name}@${event.client.address} outside their turn`);
                     }
-                    this.options.gameUpdate?.();
-                    //TODO: log
                     break;
                 }
                 default: {
-                    //TODO: Log inacceptable event
+                    this.logger?.warn?.(`Unexpected ${event.type} event in state IDLE.`);
                 }
             }
         }
@@ -369,7 +426,7 @@ export class Server {
     public close(){
         clearInterval(this.heartbeat);
         this.server.close();
-        //TODO: log
+        this.logger?.info?.(`Closing Server...`);
     }
 
 };
