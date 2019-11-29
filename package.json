@@ -2,8 +2,9 @@
   "name": "go-server",
   "version": "1.0.0",
   "description": "Go Server is a 2-Player Websockets Go Judging Server.",
-  "main": "dist/main/main.js",
+  "main": "public/main/main.js",
   "repository": "https://github.com/yahiaetman/Go-Server.git",
+  "keywords": ["go-game", "websockets", "server", "cross-platform", "typescript", "electron", "vue2"],
   "author": "Yetman <yahiazakaria13@gmail.com>",
   "license": "MIT",
   "scripts": {
@@ -12,15 +13,60 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps",
-    "watch:main": "parcel watch src/main/main.ts -d dist/main --target electron --no-hmr",
-    "watch:renderer": "parcel watch src/renderer/index.html -d dist/renderer --public-url ./ --target electron --no-hmr",
-    "production": "parcel build src/main/main.ts -d dist/main --target electron && parcel build src/renderer/index.html -d dist/renderer --target electron",
+    "watch:main": "parcel watch src/main/main.ts -d public/main --target electron --no-hmr",
+    "watch:renderer": "parcel watch src/renderer/index.html -d public/renderer --public-url ./ --target electron --no-hmr",
+    "production": "parcel build src/main/main.ts -d public/main --public-url ./ --target electron --no-source-maps --no-minify && parcel build src/renderer/index.html -d public/renderer --public-url ./ --target electron --no-source-maps --no-minify",
     "console-go": "ts-node ./src/examples/console-go.ts",
     "console-server": "ts-node ./src/examples/console-server.ts",
     "console-client": "ts-node ./src/examples/console-client.ts"
   },
+  "build": {
+    "appId": "com.yetman.go",
+    "mac": {
+      "category": "public.app-category.games",
+      "target": "7z"
+    },
+    "win": {
+      "target": "7z"
+    },
+    "linux": {
+      "target": "7z"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      {
+        "filter": [
+          "!.vscode${/*}",
+          "!src${/*}",
+          "!typings${/*}",
+          "!tests${/*}",
+          "!dist${/*}",
+          "!docs${/*}",
+          "!logs${/*}",
+          "!checkpoints${/*}",
+          "!.eslintrc.json",
+          "!.gitignore",
+          "!game.config.json",
+          "!server.config.json",
+          "!desktop.ini",
+          "!mix-manifest.json",
+          "!README.md",
+          "!LICENSE"
+        ]
+      }
+    ],
+    "extraFiles": [
+      {
+        "filter": [
+          "game.config.json",
+          "server.config.json"
+        ]
+      }
+    ]
+  },
   "dependencies": {
-    "@types/lodash": "^4.14.138",
     "dateformat": "^3.0.3",
     "fp-ts": "^2.0.5",
     "io-ts": "^2.0.1",
@@ -30,15 +76,14 @@
     "tocktimer": "^1.0.12",
     "typeface-roboto": "^0.0.75",
     "vue": "^2.6.10",
-    "vue-class-component": "^7.1.0",
     "vue-property-decorator": "^8.2.2",
     "winston": "^3.2.1",
-    "ws": "^7.1.2",
-    "yargs": "^15.0.2"
+    "ws": "^7.1.2"
   },
   "devDependencies": {
     "@types/dateformat": "^3.0.1",
     "@types/jest": "^24.0.18",
+    "@types/lodash": "^4.14.149",
     "@types/tocktimer": "^1.0.1",
     "@types/ws": "^6.0.4",
     "@typescript-eslint/eslint-plugin": "^2.1.0",

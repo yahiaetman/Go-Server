@@ -100,6 +100,7 @@ export default class HistoryComponent extends Vue {
 
     private mounted(){
         this.scollToBottom();
+        // @ts-ignore
         new ResizeObserver(()=>{
             this.scollToBottom();
         }).observe(this.historyList);

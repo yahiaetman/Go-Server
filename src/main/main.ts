@@ -50,8 +50,8 @@ class App {
             hasShadow: false,
             webPreferences: { nodeIntegration: true }
         });
-        this.window.loadFile('dist/renderer/index.html');
-        //thi.s.window.loadURL(`file://${__dirname}/../renderer/index.html`);
+        //this.window.loadFile('public/renderer/index.html');
+        this.window.loadURL(`file://${__dirname}/../renderer/index.html`);
         this.window.setMenu(null);
         //this.window.webContents.openDevTools();
         
