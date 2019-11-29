@@ -34,7 +34,7 @@ You can download a binary version for Windows from [Releases](https://github.com
 
 ### Additional Options
 
-- To the server on the console, run: `yarn console-go`.
+- To the server on the console, run: `yarn console-server`.
 - To package the server for distribution, run: `yarn dist`.
 - To run tests, run: `yarn test`.
 
