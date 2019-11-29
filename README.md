@@ -1,4 +1,4 @@
-<img src="docs/icon.png" align="right" style="width:128px" />
+<img src="docs/icon.png" align="right"/>
 
 # Go-Server
 
