@@ -4,12 +4,10 @@
 
 > Go Server is a 2-Player Websockets Go Judging Server. This project is made for the Fall 2019 Machine Intelligence Course (CMPN402/CMP402A) in Computer Engineering Program at Cairo University Faculty of Engineering.
 
-
-[![GitHub issues](https://img.shields.io/github/issues/yahiaetman/Go-Server.svg)](https://github.com/yahiaetman/Go-Server/issues)
-[![GitHub forks](https://img.shields.io/github/forks/yahiaetman/Go-Server.svg)](https://github.com/yahiaetman/Go-Server/network)
-[![GitHub stars](https://img.shields.io/github/stars/yahiaetman/Go-Server.svg)](https://github.com/yahiaetman/Go-Server/stargazers)
-[![GitHub license](https://img.shields.io/github/license/yahiaetman/Go-Server.svg)](https://github.com/yahiaetman/Go-Server/blob/master/LICENSE)
-
+[![GitHub issues](https://img.shields.io/github/issues/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/issues)
+[![GitHub forks](https://img.shields.io/github/forks/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/network)
+[![GitHub stars](https://img.shields.io/github/stars/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/stargazers)
+[![GitHub license](https://img.shields.io/github/license/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/blob/master/LICENSE)
 
 ![Screenshot](docs/screenshot.png)
 
