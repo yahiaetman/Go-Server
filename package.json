@@ -4,7 +4,15 @@
   "description": "Go Server is a 2-Player Websockets Go Judging Server.",
   "main": "public/main/main.js",
   "repository": "https://github.com/yahiaetman/Go-Server.git",
-  "keywords": ["go-game", "websockets", "server", "cross-platform", "typescript", "electron", "vue2"],
+  "keywords": [
+    "go-game",
+    "websockets",
+    "server",
+    "cross-platform",
+    "typescript",
+    "electron",
+    "vue2"
+  ],
   "author": "Yetman <yahiazakaria13@gmail.com>",
   "license": "MIT",
   "scripts": {
@@ -19,6 +27,9 @@
     "console-go": "ts-node ./src/examples/console-go.ts",
     "console-server": "ts-node ./src/examples/console-server.ts",
     "console-client": "ts-node ./src/examples/console-client.ts"
+  },
+  "jest": {
+    "preset": "ts-jest"
   },
   "build": {
     "appId": "com.yetman.go",
@@ -74,6 +85,7 @@
     "material-design-icons": "^3.0.1",
     "three-dots": "^0.1.2",
     "tocktimer": "^1.0.12",
+    "tslib": "^1.10.0",
     "typeface-roboto": "^0.0.75",
     "vue": "^2.6.10",
     "vue-property-decorator": "^8.2.2",
@@ -97,6 +109,7 @@
     "jest": "^24.9.0",
     "parcel-bundler": "^1.12.4",
     "sass": "^1.22.10",
+    "ts-jest": "^24.2.0",
     "ts-node": "^8.3.0",
     "typescript": "^3.7.2",
     "vue-template-compiler": "^2.6.10"

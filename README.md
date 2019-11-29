@@ -36,7 +36,7 @@ Communication Details can found in [this document](docs/protocol.pdf).
 
 - To the server on the console, run: `yarn console-go`.
 - To package the server for distribution, run: `yarn dist`.
-- To run tests, run: `yarn test` (not finished yet).
+- To run tests, run: `yarn test`.
 
 ## Configuration
 
