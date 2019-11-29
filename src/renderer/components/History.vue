@@ -23,7 +23,8 @@
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator';
 import ColorTagComponent from './ColorTag.vue';
-import Move from '../../types/move';
+import { Move } from '../../types/types';
+import { PointUtility } from '../../types/point.utils';
 
 @Component({
     components: {
@@ -33,23 +34,16 @@ import Move from '../../types/move';
 export default class HistoryComponent extends Vue {
     synced: boolean = true;
 
-    moves: Move[] = [
-        {type: "play", point:{row:0, column:0}},
-        {type: "play", point:{row:3, column:11}},
-        {type: "play", point:{row:11, column:5}},
-        {type: "pass"},
-        {type: "play", point:{row:18, column:17}},
-        {type: "resign"},
-    ];
+    @Prop({default:[]})
+    moves!: Move[];
     
     private syncClick():void {
         this.synced = !this.synced;
     }
 
     private format(move: Move): string {
-        if(move.type == "play"){
-            let column: string = ['A','B','C','D','E','F','G','H','J','K','L','M','N','O','P','Q','R','S','T'][move.point.column];
-            return `Played ${column}${move.point.row+1}`;
+        if(move.type == "place"){
+            return `Played ${PointUtility.Format(move.point)}`;
         } else if(move.type == "pass"){
             return "Passed";
         } else if(move.type == "resign"){

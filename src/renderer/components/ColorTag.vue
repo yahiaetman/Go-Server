@@ -12,7 +12,7 @@ import { Color } from '../../types/types';
 @Component
 export default class ColorTagComponent extends Vue {
     @Prop()
-    color: Color
+    color!: Color;
     
     get IsBlack(): Boolean {
         return this.color==Color.BLACK;

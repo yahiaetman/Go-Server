@@ -1,15 +1,23 @@
 <template>
     <div class="status-container">
-        <div class="status-text">Status Pending...</div>
+        <div class="status-text">{{status}}</div>
     </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
+import { ipcRenderer } from 'electron';
 
 @Component
 export default class StatusBarComponent extends Vue {
+    status: string = "Status Pending...";
+
+    mounted(){
+        ipcRenderer.on("status-update", (event, message: string)=>{
+            this.status = message;
+        })
+    }
 }
 </script>
 

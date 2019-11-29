@@ -7,7 +7,7 @@ import * as types from '../types/types';
 import * as MessageTypes from '../types/client-messages.type';
 import * as MessageCodecs from '../types/client-messages.codec';
 import { Either } from 'fp-ts/lib/Either';
-import { Errors, object } from 'io-ts';
+import { Errors, object, number } from 'io-ts';
 import GameManager from '../common/game-manager';
 import { FlipColor } from '../types/color.utils';
 import { PointUtility } from '../types/point.utils';
@@ -178,7 +178,7 @@ export class Server {
             logger: this.options.logger,
             tick: ()=>{ this.options.gameUpdate?.() },
             end: (reason)=>{ this.processEvent({type:"END", reason:reason}); },
-            reload: ()=>{ this.options.gameUpdate?.() }
+            reload: ()=>{ this.options.gameUpdate?.(); }
         });
     }
 
@@ -210,20 +210,38 @@ export class Server {
         this.processEvent({type:"END", reason:"pause"});
     }
 
-    public join(client: Client, color: types.Color){
-        this.processEvent({type:"JOIN", client:client, color:color});
+    public join(client: Client | number, color: types.Color){
+        if(typeof client === 'number'){
+            let element: Client | undefined = this.clients.find((v)=>v.id == client);
+            if(element)
+                this.processEvent({type:"JOIN", client:element, color:color});
+        } else {
+            this.processEvent({type:"JOIN", client:client, color:color});
+        }
     }
 
-    public leave(client: Client){
-        this.processEvent({type:"LEAVE", client:client});
+    public leave(client: Client | number){
+        if(typeof client === 'number'){
+            let element: Client | undefined = this.clients.find((v)=>v.id == client);
+            if(element)
+                this.processEvent({type:"LEAVE", client:element});
+        } else {
+            this.processEvent({type:"LEAVE", client:client});
+        }
     }
 
     public swap(){
         this.processEvent({type:"SWAP"});
     }
 
-    public disconnect(client: Client){
-        this.processEvent({type:"DISCONNECT", client:client});
+    public disconnect(client: Client | number){
+        if(typeof client === 'number'){
+            let element: Client | undefined = this.clients.find((v)=>v.id == client);
+            if(element)
+                this.processEvent({type:"DISCONNECT", client:element});
+        } else {
+            this.processEvent({type:"DISCONNECT", client:client});
+        }
     }
 
     private processEvent(event: ServerEvent){

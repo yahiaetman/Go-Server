@@ -14,7 +14,7 @@
         "sourceMap": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "noImplicitThis": true
+        "noImplicitThis": true,
     },
     "exclude": [
         "node_modules",

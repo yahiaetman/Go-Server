@@ -3,7 +3,7 @@
         <div class="requests-header">
             <div class="requests-title">
                 <span class="requests-title-text">REQUESTS</span>
-                <span class="requests-count">{{requests.length}}</span>
+                <span class="requests-count">{{clients.length}}</span>
             </div>
             <i class="requests-burger material-icons" @click="toggleExpansion">
                 menu
@@ -11,24 +11,24 @@
         </div>
         <transition name="collapse">
             <div class="requests-list" v-show="expanded">
-                <div v-for="(request, index) in requests" :key="index" class="request-item">
+                <div v-for="(client, index) in clients" :key="client.id" class="request-item">
                     <div :class="['request-marker', index%2==0?'dark':'light']"></div>
-                    <div class="request-name">{{request.name}}</div>
-                    <div class="request-ip">{{request.ip}}</div>
+                    <div class="request-name">{{client.name}}</div>
+                    <div class="request-address">{{client.address}}</div>
                     <div class="request-buttons">
-                        <div class="request-accept-button" v-show="free[0]" @click="accept(request, 0)">
+                        <div class="request-accept-button" @click="join(client, 'B')">
                             <i class="material-icons">
                                 check
                             </i>
                             <span>1</span>
                         </div>
-                        <div class="request-accept-button" v-show="free[1]" @click="accept(request, 1)">
+                        <div class="request-accept-button" @click="join(client, 'W')">
                             <i class="material-icons">
                                 check
                             </i>
                             <span>2</span>
                         </div>
-                        <div class="request-reject-button" @click="reject(request)">
+                        <div class="request-reject-button" @click="disconnect(client)">
                             <i class="material-icons">
                                 close
                             </i>
@@ -43,29 +43,28 @@
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
+import { Client } from './renderer-types';
+import { Color } from '../../types/types';
 
-interface Request {
-    name:string,
-    ip:string
-};
 
 @Component
 export default class RequestsComponent extends Vue {
     expanded: Boolean = false;
-    requests: Request[] = [
-        {name: "Spartans", ip:"127.0.0.1"},
-        {name: "Exodia", ip:"192.256.0.16"},
-        {name: "Dragon Warrior", ip:"132.90.121.13"},
-        {name: "PewDiePie", ip:"666.666.666.666"}
-    ];
-    free: boolean[] = [true, true];
+
+    @Prop({default: []})
+    clients!: Client[];
 
     private toggleExpansion() : void {
         this.expanded = !this.expanded;
     }
 
-    private accept(request: Request, player: number){}
-    private reject(request: Request){}
+    private join(client: Client, color: Color){
+        this.$emit("join", client.id, color);
+    }
+
+    private disconnect(client: Client){
+        this.$emit("disconnect", client.id);
+    }
 }
 </script>
 
@@ -167,7 +166,7 @@ export default class RequestsComponent extends Vue {
     grid-template-rows: 24px 24px;
     grid-template-areas:
     'marker name name'
-    'marker ip buttons';
+    'marker address buttons';
     width: 248px;
     height: 48px;
     font-size: 14px;
@@ -193,8 +192,8 @@ export default class RequestsComponent extends Vue {
     white-space: nowrap;
 }
 
-.request-ip {
-    grid-area: ip;
+.request-address {
+    grid-area: address;
     padding: 4px 0px 4px 8px;
 }
 

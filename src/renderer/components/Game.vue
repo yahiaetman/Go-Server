@@ -1,24 +1,24 @@
 <template>
     <div class="game-container">
         <div class="game-board">
-            <board></board>
+            <board :board="state.board"></board>
         </div>
         <div class="game-score score1">
             <div class="score-title">SCORE</div>
-            <div class="score-value">392.0</div>
-            <div class="prisoners">No Prisoners</div>
+            <div class="score-value">{{getPlayerScore('B')}}</div>
+            <div class="prisoners">{{getPlayerPrisoners('B')}}</div>
             <div>
-                <i class="material-icons md-dark">
+                <i class="material-icons md-dark" v-show="winner=='B'">
                     stars
                 </i>
             </div>
         </div>
         <div class="game-score score2">
             <div class="score-title">SCORE</div>
-            <div class="score-value">182.5</div>
-            <div class="prisoners">1 Prisoner</div>
+            <div class="score-value">{{getPlayerScore('W')}}</div>
+            <div class="prisoners">{{getPlayerPrisoners('W')}}</div>
             <div>
-                <i class="material-icons md-dark">
+                <i class="material-icons md-dark" v-show="winner=='W'">
                     stars
                 </i>
             </div>
@@ -26,41 +26,41 @@
         <div class="game-control">
             <div class="game-info1">
                 <color-tag color="B"></color-tag>
-                <div class="player-name">Thomson Reuter</div>
+                <div :class="['player-name',{'none':!hasPlayer('B')}]">{{getPlayerName("B")}}</div>
                 <hr class="info-line">
                 <div>
-                    <span class="player-time">99:99:99.999</span>
-                    <div class="dot-bricks player-thinking"></div>
+                    <span class="player-time">{{getPlayerTime('B')}}</span>
+                    <div class="dot-bricks player-thinking" v-show="running && state.turn==='B'"></div>
                 </div>
-                <button class="disconnect-button">
-                    <i class="material-icons md-dark" v-show="true">refresh</i>
-                    <span>DISCONNECT (127.999.256.101)</span>
+                <button class="leave-button" @click="leave('B')">
+                    <i class="material-icons md-dark" v-show="!hasPlayer('B')">refresh</i>
+                    <span>{{hasPlayer('B')?`LEAVE (${getPlayerAddress("B")})`:"Waiting..."}}</span>
                 </button>
             </div>
             <div class="game-info2">
                 <color-tag color="W"></color-tag>
-                <div class="player-name">Thomson Reuter</div>
+                <div :class="['player-name',{'none':!hasPlayer('W')}]">{{getPlayerName("W")}}</div>
                 <hr class="info-line">
                 <div>
-                    <div class="dot-bricks player-thinking"></div>
-                    <span class="player-time">00:24:12.012</span>
+                    <div class="dot-bricks player-thinking" v-show="running && state.turn==='W'"></div>
+                    <span class="player-time">{{getPlayerTime('W')}}</span>
                 </div>
-                <button class="disconnect-button">
-                    <i class="material-icons md-dark" v-show="true">refresh</i>
-                    <span>DISCONNECT (127.999.256.101)</span>
+                <button class="leave-button" @click="leave('W')">
+                    <i class="material-icons md-dark" v-show="!hasPlayer('W')">refresh</i>
+                    <span>{{hasPlayer('W')?`LEAVE (${getPlayerAddress("W")})`:"Waiting..."}}</span>
                 </button>
             </div>
             <div class="game-control-center">
-                <button class="big-round-button center-button">
-                    <i class="material-icons">play_arrow</i>
+                <button class="big-round-button center-button" :disabled="!bothPlayers" @click="start">
+                    <i class="material-icons">{{running?'pause':'play_arrow'}}</i>
                 </button>
-                <button class="small-round-button left-button" tooltip="Swap Players" data-tooltipleft="-50px">
+                <button class="small-round-button left-button" tooltip="Swap Players" data-tooltipleft="-50px" :disabled="!anyPlayer" @click="swap">
                     <i class="material-icons">swap_horiz</i>
                 </button>
-                <button class="small-round-button right-button"  tooltip="Clear Board">
+                <button class="small-round-button right-button" tooltip="Clear Board" :disabled="!checkpoint">
                     <i class="material-icons">clear_all</i>
                 </button>
-                <div class="game-time">99:99:99</div>
+                <div class="game-time">{{getTotalTime()}}</div>
             </div>
         </div>
     </div>
@@ -71,6 +71,9 @@ import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 import BoardComponent from './Board.vue';
 import ColorTagComponent from './ColorTag.vue';
+import { Client } from './renderer-types';
+import { Color, GameState, Move } from '../../types/types';
+import * as TimeUtility from '../../types/time.utils';
 
 @Component({
     components : {
@@ -79,6 +82,85 @@ import ColorTagComponent from './ColorTag.vue';
     }
 })
 export default class GameComponent extends Vue {
+    @Prop({default: {[Color.BLACK]:null, [Color.WHITE]:null}})
+    players!: {[name: string]: Client | null};
+
+    @Prop({default:()=>({})})
+    state!: GameState;
+
+    @Prop({default:()=>({[Color.BLACK]:0, [Color.WHITE]:0})})
+    scores!: {[name: string]: 0};
+
+    @Prop({default:false})
+    checkpoint!: boolean;
+
+    @Prop({default:false})
+    ended!: boolean;
+
+    @Prop({default:false})
+    running!: boolean;
+
+    @Prop({default:Color.NONE})
+    winner!: Color;
+
+    getPlayerName(color: Color): string {
+        let player = this.players[color];
+        return player!==null ? player.name : (color===Color.BLACK?"BLACK":"WHITE");
+    }
+
+    getPlayerAddress(color: Color): string {
+        let player = this.players[color];
+        return player!==null ? player.address : "";
+    }
+
+    getPlayerTime(color: Color): string {
+        return TimeUtility.Format(this.state.players[color].remainingTime);
+    }
+
+    getTotalTime(): string {
+        return TimeUtility.Format(this.state.players[Color.BLACK].remainingTime + this.state.players[Color.WHITE].remainingTime);
+    }
+
+    getPlayerPrisoners(color: Color): string {
+        let prisoners = this.state.players[color].prisoners;
+        return prisoners==0?"No prisoners":(prisoners==1?"One prisoner":`${prisoners} prisoners`);
+    }
+
+    getPlayerScore(color: Color): number {
+        return this.scores[color];
+    }
+
+    hasPlayer(color: Color): boolean {
+        return this.players[color] !== null;
+    }
+
+    get anyPlayer(): boolean {
+        return this.players[Color.BLACK] !== null || this.players[Color.WHITE] !== null;
+    }
+
+    get bothPlayers(): boolean {
+        return this.players[Color.BLACK] !== null && this.players[Color.WHITE] !== null;
+    }
+
+    leave(color: Color){
+        let player = this.players[color];
+        if(player != null){
+            this.$emit("leave", player.id);
+        }
+    }
+
+    swap(){
+        this.$emit("swap");
+    }
+
+    start(){
+        if(this.running) this.$emit("stop");
+        else this.$emit("start");
+    }
+
+    clear(){
+        this.$emit("clear");
+    }
 }
 </script>
 
@@ -152,6 +234,10 @@ export default class GameComponent extends Vue {
     color: $color1;
 }
 
+.player-name.none {
+    color: $color2;
+}
+
 .info-line {
     border: 0.5px solid $color2;
 }
@@ -183,7 +269,7 @@ export default class GameComponent extends Vue {
     color: $color1;
 }
 
-.disconnect-button {
+.leave-button {
     font-size: 16px;
     border: none;
     background-color: $color3;
@@ -195,12 +281,12 @@ export default class GameComponent extends Vue {
     cursor: pointer;
 }
 
-.disconnect-button > span {
+.leave-button > span {
     margin-right: 8px;
     vertical-align: middle !important;
 }
 
-.disconnect-button > i {
+.leave-button > i {
     font-size: 18px;
     margin-bottom: 2px;
     vertical-align: middle !important;
@@ -210,12 +296,12 @@ export default class GameComponent extends Vue {
     animation-timing-function: linear;
 }
 
-.disconnect-button:hover {
+.leave-button:hover {
     box-shadow: 0px 0px 5px 0px #00000044;
     color: $color1;
 }
 
-.disconnect-button:active {
+.leave-button:active {
     box-shadow: 0px 0px 3px 0px #00000044;
     color: $color1;
 }

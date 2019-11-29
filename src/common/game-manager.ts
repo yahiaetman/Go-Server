@@ -51,7 +51,7 @@ export default class GameManager {
             }
             if(this.state !== ManagerState.PLAYING && this.volatile) {
                 this.game.Configuration = this.Configuration;
-                options?.reload?.();
+                this.options?.reload?.();
             }
         });
         const checkpointsFolderPath = path.dirname(GameManager.CheckpointPath);
@@ -64,13 +64,14 @@ export default class GameManager {
             }
             if(this.state !== ManagerState.PLAYING && this.volatile) {
                 this.game.Configuration = this.Configuration;
-                options?.reload?.();
+                this.options?.reload?.();
             }
         });
 
         this.game = new GoGame(this.Configuration);
         this.state = ManagerState.READY;
         this.volatile = true;
+        process.nextTick(()=>{this.options?.reload?.()});
     }
 
     private readConfig(filePath: string): GameConfiguration | null {
@@ -131,6 +132,10 @@ export default class GameManager {
     public get HasCheckpoint() : boolean {
         return this.configLayers.checkpointFile !== null;
     }
+    
+    public get GameRunning(): boolean {
+        return this.state == ManagerState.PLAYING;
+    }
 
     public start() {
         if(this.state == ManagerState.PLAYING) return;
@@ -143,6 +148,7 @@ export default class GameManager {
     }
 
     public stop() {
+        this.state = ManagerState.READY;
         this.timer.pause();
         this.saveCheckpoint();
     }
@@ -160,6 +166,7 @@ export default class GameManager {
             this.timer.pause();
         }
         if(this.game.HasGameEnded) {
+            this.state = ManagerState.READY;
             this.logger?.info?.(`Game has ended.`);
             this.timer.stop();
             this.archiveCheckpoint();
