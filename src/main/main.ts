@@ -59,13 +59,13 @@ class App {
             this.server = new Server({
                 logger: this.logger,
                 gameUpdate: ()=>{
-                    let state = this.server.GameManager.CurrentState;
-                    let history = this.server.GameManager.Configuration.moveLog;
+                    let config = this.server.GameManager.Game.Configuration;
                     this.window?.webContents.send("game-update", {
-                        state: state,
-                        history: history,
+                        state: this.server.GameManager.CurrentState,
+                        history: config.moveLog,
+                        initialTurn: config.initialState.turn,
                         scores: this.server.GameManager.Scores,
-                        hasCheckpoint: this.server.GameManager.HasCheckpoint,
+                        canClear: this.server.GameManager.CanClear,
                         hasGameEnded: this.server.GameManager.HasGameEnded,
                         running: this.server.GameManager.GameRunning
                     });

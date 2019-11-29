@@ -60,7 +60,7 @@ export default class GameManager {
         fs.watch(checkpointsFolderPath, (event, filename) => {
             if(filename == path.basename(GameManager.CheckpointPath)) {
                 this.logger?.info?.(`File "./checkpoints/checkpoint.json" fired a watch event ${event}, reloading configuration`);
-                this.configLayers.configFile = this.readConfig(GameManager.CheckpointPath);
+                this.configLayers.checkpointFile = this.readConfig(GameManager.CheckpointPath);
             }
             if(this.state !== ManagerState.PLAYING && this.volatile) {
                 this.game.Configuration = this.Configuration;
@@ -105,6 +105,8 @@ export default class GameManager {
             if(fs.existsSync(GameManager.CheckpointPath)){
                 const discardedPath = path.join(path.dirname(GameManager.CheckpointPath), `discarded-${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}.json`);
                 fs.renameSync(GameManager.CheckpointPath, discardedPath);
+            } else {
+                this.game.Configuration = this.Configuration;
             }
             this.options.reload?.();
         }
@@ -129,8 +131,14 @@ export default class GameManager {
         }
     }
 
+    public get Game() { return this.game; }
+
     public get HasCheckpoint() : boolean {
         return this.configLayers.checkpointFile !== null;
+    }
+
+    public get CanClear() : boolean {
+        return this.state != ManagerState.PLAYING && (!this.volatile || this.configLayers.checkpointFile !== null);
     }
     
     public get GameRunning(): boolean {
@@ -197,6 +205,10 @@ export default class GameManager {
         else
             state.players[state.turn].remainingTime -= this.Configuration.idleDeltaTime;
         return state;
+    }
+
+    public get History() {
+        return this.game.Configuration.moveLog;
     }
 
     public get EndGameInfo(): EndGameInfo | null {

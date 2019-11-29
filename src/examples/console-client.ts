@@ -107,7 +107,7 @@ function processEvent(event: ClientEvent){
         console.log(`Reason: ${event.message.reason}`);
         console.log(`Winner: ${event.message.winner}`);
         _.forEach(event.message.players, (player, color)=>{
-            console.log(`${color} => Score: ${player.score}, Remaining Timer: ${TimeUtility.Format(player.remainingTime)}`);
+            console.log(`${color} => Score: ${player.score}, Remaining Time: ${TimeUtility.Format(player.remainingTime)}`);
         });
         state = ClientState.READY;
         return;

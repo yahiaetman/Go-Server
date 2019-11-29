@@ -123,6 +123,7 @@ export class Server {
             socket.on("pong", ()=>{
                 client.alive = true;
             });
+            this.logger?.info?.(`Sending to ${client.address}: ${JSON.stringify({type:"NAME"})}`);
             socket.send(JSON.stringify({type:"NAME"}));
             socket.on("message", (data)=>{
                 this.logger?.info(`Received ${data} message from ${client.name} (${client.address})`);
@@ -301,7 +302,7 @@ export class Server {
                         this.state = ServerState.IDLE;
                         let players = this.Players;
                         _.forEach(players, (player, color)=>{
-                            player?.socket.send(JSON.stringify({ type: "START", configuration: this.gameManager.Configuration, color: color}));
+                            this.send(player, {type: "START", configuration: this.gameManager.Configuration, color: color});
                         });
                         this.gameManager.start();
                         this.logger?.info("\n" + _.repeat(_.repeat("#", 80) + "\n", 4));
@@ -368,7 +369,7 @@ export class Server {
                         message.players = {
                             [types.Color.BLACK]:{score: scores[types.Color.BLACK], remainingTime: state.players[types.Color.BLACK].remainingTime},
                             [types.Color.WHITE]:{score: scores[types.Color.WHITE], remainingTime: state.players[types.Color.WHITE].remainingTime}
-                        } 
+                        };
                     } else {
                         let endGameInfo = this.gameManager.EndGameInfo;
                         let scores = endGameInfo?.scores ?? {[types.Color.BLACK]:0, [types.Color.WHITE]:0};
@@ -377,13 +378,13 @@ export class Server {
                         message.players = {
                             [types.Color.BLACK]:{score: scores[types.Color.BLACK], remainingTime: state.players[types.Color.BLACK].remainingTime},
                             [types.Color.WHITE]:{score: scores[types.Color.WHITE], remainingTime: state.players[types.Color.WHITE].remainingTime}
-                        } 
+                        };
                     }
                     let players = this.Players;
                     for (const color in players) {
                         const player = players[color];
                         if(player != null){
-                            player.socket.send(JSON.stringify(message));
+                            this.send(player, message);
                         }
                     }
                     this.state = ServerState.INIT;
@@ -420,12 +421,12 @@ export class Server {
                         if(result.valid){
                             this.logger?.info("Move accepted");
                             status += ` (Accepted)`;
-                            players[turn]?.socket?.send?.(JSON.stringify({type:"VALID", remainingTime:remainingTime}));
-                            players[other]?.socket?.send?.(JSON.stringify({type:"MOVE", move:event.message.move, remainingTime:remainingTime}));
+                            this.send(players[turn], {type:"VALID", remainingTime:remainingTime});
+                            this.send(players[other], {type:"MOVE", move:event.message.move, remainingTime:remainingTime});
                         } else {
                             status += ` (Rejected: ${result.message})`;
                             this.logger?.info(`Move rejected for the reason: ${result.message}`);
-                            players[turn]?.socket?.send?.(JSON.stringify({type:"INVALID", message:result.message, remainingTime:remainingTime}));
+                            this.send(players[turn], {type:"INVALID", message:result.message, remainingTime:remainingTime});
                         }
                         this.options.statusUpdate?.(status);        
                         this.options.gameUpdate?.();
@@ -438,6 +439,14 @@ export class Server {
                     this.logger?.warn?.(`Unexpected ${event.type} event in state IDLE.`);
                 }
             }
+        }
+    }
+
+    private send(client: Client | null, message: any){
+        if(client){
+            let messageJSON = JSON.stringify(message);
+            this.logger?.info?.(`Sending to ${client.name}@${client.address}: ${messageJSON}`);
+            client.socket.send(messageJSON);
         }
     }
 

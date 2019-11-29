@@ -9,11 +9,18 @@
                 <span>SYNC</span>
             </div>
         </div>
-        <div class="history-list">
+        <div class="history-list" ref="history-list" @scroll="onScroll">
+            <div v-show="!end && moves.length==0" class="empty-history">No Moves Yet</div>
             <div v-for="(move, index) in moves" :key="index" class="history-item">
                 <span>{{(index+1).toString().padStart(3, "0")}}:</span>
-                <color-tag :color="index%2==0?'B':'W'"></color-tag>
+                <color-tag :color="turn(index)"></color-tag>
                 <span>{{format(move)}}</span>
+            </div>
+            <div v-show="end" class="history-item">
+                <span>RESULT:</span>
+                <color-tag v-show="Winner!='.'" :color="Winner"></color-tag>
+                <span v-show="Winner!='.'">WON</span>
+                <span v-show="Winner=='.'">DRAW</span>
             </div>
         </div>
     </div>    
@@ -21,10 +28,11 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator';
+import { Component, Prop, Ref, Watch } from 'vue-property-decorator';
 import ColorTagComponent from './ColorTag.vue';
-import { Move } from '../../types/types';
+import { Move, EndGameInfo, Color } from '../../types/types';
 import { PointUtility } from '../../types/point.utils';
+import { FlipColor } from '../../types/color.utils';
 
 @Component({
     components: {
@@ -33,13 +41,19 @@ import { PointUtility } from '../../types/point.utils';
 })
 export default class HistoryComponent extends Vue {
     synced: boolean = true;
+    haltUnsync: boolean = false;
+
+    @Prop({default:Color.BLACK})
+    initialTurn!: Color;
 
     @Prop({default:[]})
     moves!: Move[];
-    
-    private syncClick():void {
-        this.synced = !this.synced;
-    }
+
+    @Prop()
+    end?: EndGameInfo;
+
+    @Ref('history-list')
+    historyList!: HTMLDivElement;
 
     private format(move: Move): string {
         if(move.type == "place"){
@@ -51,6 +65,44 @@ export default class HistoryComponent extends Vue {
         } else {
             return "";
         }
+    }
+
+    private turn(index: number): Color {
+        return index%2==0?this.initialTurn:FlipColor(this.initialTurn);
+    }
+
+    get Winner() {
+        if(this.end) return this.end.winner;
+        else return Color.NONE;
+    }
+
+    private onScroll(){
+        if(this.haltUnsync) this.haltUnsync = false;
+        else this.synced = false;
+    }
+
+    private syncClick():void {
+        this.synced = !this.synced;
+        this.scollToBottom();
+    }
+
+    private scollToBottom(){
+        if(this.synced){
+            this.haltUnsync = true;
+            this.historyList.scrollTop = this.historyList.scrollHeight;
+        }
+    }
+
+    @Watch('moves')
+    onMoveListChange(){
+        this.scollToBottom();
+    }
+
+    private mounted(){
+        this.scollToBottom();
+        new ResizeObserver(()=>{
+            this.scollToBottom();
+        }).observe(this.historyList);
     }
     
 }
@@ -141,5 +193,13 @@ export default class HistoryComponent extends Vue {
 
 .history-item {
     margin: 8px;
+}
+
+.empty-history {
+    width: 100%;
+    padding: 32px 0;
+    text-align: center;
+    font-style: oblique;
+    color: $color2;
 }
 </style>

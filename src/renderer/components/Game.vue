@@ -32,7 +32,7 @@
                     <span class="player-time">{{getPlayerTime('B')}}</span>
                     <div class="dot-bricks player-thinking" v-show="running && state.turn==='B'"></div>
                 </div>
-                <button class="leave-button" @click="leave('B')">
+                <button class="leave-button" @click="leave('B')" :disabled="running || !hasPlayer('B')">
                     <i class="material-icons md-dark" v-show="!hasPlayer('B')">refresh</i>
                     <span>{{hasPlayer('B')?`LEAVE (${getPlayerAddress("B")})`:"Waiting..."}}</span>
                 </button>
@@ -45,7 +45,7 @@
                     <div class="dot-bricks player-thinking" v-show="running && state.turn==='W'"></div>
                     <span class="player-time">{{getPlayerTime('W')}}</span>
                 </div>
-                <button class="leave-button" @click="leave('W')">
+                <button class="leave-button" @click="leave('W')" :disabled="running || !hasPlayer('W')">
                     <i class="material-icons md-dark" v-show="!hasPlayer('W')">refresh</i>
                     <span>{{hasPlayer('W')?`LEAVE (${getPlayerAddress("W")})`:"Waiting..."}}</span>
                 </button>
@@ -57,8 +57,8 @@
                 <button class="small-round-button left-button" tooltip="Swap Players" data-tooltipleft="-50px" :disabled="!anyPlayer" @click="swap">
                     <i class="material-icons">swap_horiz</i>
                 </button>
-                <button class="small-round-button right-button" tooltip="Clear Board" :disabled="!checkpoint">
-                    <i class="material-icons">clear_all</i>
+                <button class="small-round-button right-button" tooltip="Clear Board" :disabled="!canClear" @click="clear">
+                    <i class="material-icons">clear</i>
                 </button>
                 <div class="game-time">{{getTotalTime()}}</div>
             </div>
@@ -92,7 +92,7 @@ export default class GameComponent extends Vue {
     scores!: {[name: string]: 0};
 
     @Prop({default:false})
-    checkpoint!: boolean;
+    canClear!: boolean;
 
     @Prop({default:false})
     ended!: boolean;

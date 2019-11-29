@@ -8,10 +8,11 @@
                 @leave="leave"
                 @swap="swap"
                 @start="start"
-                @stop="clear"
+                @stop="stop"
+                @clear="clear"
                 :state="gameState.state"
                 :scores="gameState.scores"
-                :checkpoint="gameState.hasCheckpoint"
+                :can-clear="gameState.canClear"
                 :ended="gameState.hasGameEnded"
                 :running="gameState.running"
                 :winner="Winner"
@@ -20,7 +21,7 @@
             </div>
             <div class="side-area">
                 <div class="history-area">
-                    <history :moves="MoveLog"></history>
+                    <history :moves="MoveLog" :end="EndGameInfo" :initial-turn="gameState.initialTurn"></history>
                 </div>
                 <div class="requests-area">
                     <requests :clients="serverState.clients" @join="join" @disconnect="disconnect"></requests>
@@ -61,8 +62,9 @@ export default class AppComponent extends Vue {
     gameState: GameUIState = {
         state: {board:[], players:{[Color.BLACK]: {prisoners:0, remainingTime:0}, [Color.WHITE]: {prisoners:0, remainingTime:0}}, turn:Color.NONE},
         history: [],
+        initialTurn: Color.BLACK,
         scores: {[Color.BLACK]: 0, [Color.WHITE]: 0},
-        hasCheckpoint: false,
+        canClear: false,
         hasGameEnded: false,
         running: false
     };
@@ -76,6 +78,12 @@ export default class AppComponent extends Vue {
 
     get MoveLog(): Move[] {
         return this.gameState.history.map((v)=>v.move).filter((v)=>v) as Move[];
+    }
+
+    get EndGameInfo() {
+        if(this.gameState.hasGameEnded && this.gameState.history.length > 0){
+            return this.gameState.history[this.gameState.history.length-1].end;
+        } else return undefined;
     }
 
     private join(id: number, color: Color){

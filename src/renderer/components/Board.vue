@@ -9,34 +9,34 @@
                 </filter>
             </defs>
             <g>
-                <line v-for="i in 19" :key="i" :x1="30+i*20" :y1="50" :x2="30+i*20" :y2="50+18*20" class="board-line"/>
+                <line v-for="i in Height" :key="i" :x1="BoardStart.x+(i-1)*BoardDelta" :y1="BoardStart.y" :x2="BoardStart.x+(i-1)*BoardDelta" :y2="BoardStart.y+BoardSize.y" class="board-line"/>
             </g>
             <g>
-                <line v-for="i in 19" :key="i" :x1="50" :y1="30+i*20" :x2="50+18*20" :y2="30+i*20" class="board-line"/>
+                <line v-for="i in Width" :key="i" :x1="BoardStart.x" :y1="BoardStart.y+(i-1)*BoardDelta" :x2="BoardStart.x+BoardSize.x" :y2="BoardStart.y+(i-1)*BoardDelta" class="board-line"/>
             </g>
             <g>
-                <circle v-for="point in fixedHandicapPoints" :key="`Point(${point.row},${point.column})`" :cx="50+point.column*20" :cy="50+point.row*20" r="6" class="board-point"/>
-            </g>
-            <g>
-                <g>
-                    <text v-for="i in 19" :key="i" :x="30+i*20" :y="30" class="board-label">{{getColumnName(i-1)}}</text>
-                </g>
-                <g>
-                    <text v-for="i in 19" :key="i" :x="30+i*20" :y="50+18*20+35" class="board-label">{{getColumnName(i-1)}}</text>
-                </g>
-                <g>
-                    <text v-for="i in 19" :key="i" :y="30+i*20+5" :x="50-35" class="board-label">{{i}}</text>
-                </g>
-                <g>
-                    <text v-for="i in 19" :key="i" :y="30+i*20+5" :x="50+18*20+35" class="board-label">{{i}}</text>
-                </g>
+                <circle v-for="point in HandicapPoints" :key="`Point(${point.row},${point.column})`" :cx="BoardStart.x+point.column*BoardDelta" :cy="BoardStart.y+point.row*BoardDelta" :r="BoardDelta/4" class="board-point"/>
             </g>
             <g>
                 <g>
-                    <circle v-for="stone in Stones" :key="stone.key" :cx="50+20*stone.position.column" :cy="50+20*stone.position.row" r="10" filter="url(#shadow)"/>
+                    <text v-for="i in Width" :key="i" :x="BoardStart.x+(i-1)*BoardDelta" :y="BoardStart.y-TextMargin" class="board-label">{{getColumnName(i-1)}}</text>
                 </g>
                 <g>
-                    <circle v-for="stone in Stones" :key="stone.key" :cx="50+20*stone.position.column" :cy="50+20*stone.position.row" r="10" :class="[stone.class]"/>
+                    <text v-for="i in Width" :key="i" :x="BoardStart.x+(i-1)*BoardDelta" :y="BoardStart.y+BoardSize.y+TextMargin" class="board-label">{{getColumnName(i-1)}}</text>
+                </g>
+                <g>
+                    <text v-for="i in Height" :key="i" :y="BoardStart.y+(i-1)*BoardDelta" :x="BoardStart.x-TextMargin" class="board-label">{{i}}</text>
+                </g>
+                <g>
+                    <text v-for="i in Height" :key="i" :y="BoardStart.y+(i-1)*BoardDelta" :x="BoardStart.x+BoardSize.x+TextMargin" class="board-label">{{i}}</text>
+                </g>
+            </g>
+            <g>
+                <g>
+                    <circle v-for="stone in Stones" :key="stone.key" :cx="BoardStart.x+BoardDelta*stone.position.column" :cy="BoardStart.y+BoardDelta*stone.position.row" :r="BoardDelta/2" filter="url(#shadow)"/>
+                </g>
+                <g>
+                    <circle v-for="stone in Stones" :key="stone.key" :cx="BoardStart.x+BoardDelta*stone.position.column" :cy="BoardStart.x+BoardDelta*stone.position.row" :r="BoardDelta/2" :class="[stone.class]"/>
                 </g>
             </g>
         </svg>
@@ -49,6 +49,11 @@ import * as _ from 'lodash';
 import { Component, Prop } from 'vue-property-decorator';
 import { Point, Color } from '../../types/types';
 import { PointUtility } from '../../types/point.utils';
+
+const BOARD_MARGIN = 50;
+const MAX_DELTA = 20;
+const SIZE = 460;
+const TEXT_MARGIN = 20;
 
 @Component
 export default class BoardComponent extends Vue {
@@ -77,6 +82,69 @@ export default class BoardComponent extends Vue {
         }));
         stones = _.filter(stones, (stone)=>stone.class!=='.');
         return stones;
+    }
+
+    get Width(): number {
+        return this.board.length==0?0:this.board[0].length;
+    }
+
+    get Height(): number {
+        return this.board.length;
+    }
+
+    get BoardSize(): {x: number, y: number} {
+        let pxW = (this.Width - 1) * MAX_DELTA, pxH = (this.Height - 1) * MAX_DELTA;
+        let pxMax = Math.max(pxW, pxH);
+        let maxS = SIZE - 2*BOARD_MARGIN;
+        if(pxMax > maxS){
+            pxW = Math.floor(pxW * maxS / pxMax);
+            pxH = Math.floor(pxH * maxS / pxMax);
+        }
+        return {x: pxW, y: pxH};
+    }
+
+    get BoardStart(): {x: number, y: number} {
+        let size = this.BoardSize;
+        return {x: (SIZE - size.x)/2, y: (SIZE - size.y)/2};
+    }
+
+    get BoardDelta(): number {
+        return this.BoardSize.y/(this.Height-1);
+    }
+
+    get TextMargin(): number {
+        return TEXT_MARGIN;
+    }
+
+    get HandicapPoints(): Point[] {
+        let points: Point[];
+        let size = this.Height;
+        if(size < 7 || size != this.Width) return [];
+        let edge = size>=13?4:3;
+        if(size == 7 || size%2==0){
+            points = [
+                {row: edge-1, column: edge-1},
+                {row: size-edge, column: edge-1},
+                {row: edge-1, column: size-edge},
+                {row: size-edge, column: size-edge},
+            ];
+        } else {
+            let center = (size-1)/2;
+            points = [
+                {row: edge-1, column: edge-1},
+                {row: center, column: edge-1},
+                {row: size-edge, column: edge-1},
+
+                {row: edge-1, column: center},
+                {row: center, column: center},
+                {row: size-edge, column: center},
+
+                {row: edge-1, column: size-edge},
+                {row: center, column: size-edge},
+                {row: size-edge, column: size-edge},
+            ];
+        }
+        return points;
     }
 }
 </script>
@@ -109,6 +177,7 @@ export default class BoardComponent extends Vue {
 
 .board-label {
     text-anchor: middle;
+    dominant-baseline: middle;
     font-size: 16px;
     fill: $color2;
 }

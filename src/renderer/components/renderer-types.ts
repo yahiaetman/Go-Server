@@ -1,4 +1,4 @@
-import { GameState, LogEntry, EndGameInfo } from '../../types/types'
+import { GameState, LogEntry, Color } from '../../types/types'
 
 export interface Client {
     id: number,
@@ -14,8 +14,9 @@ export interface ServerUIState {
 export interface GameUIState {
     state: GameState,
     history: LogEntry[],
+    initialTurn: Color,
     scores: {[name: string]: number},
-    hasCheckpoint: boolean,
+    canClear: boolean,
     hasGameEnded: boolean,
     running: boolean
 }
