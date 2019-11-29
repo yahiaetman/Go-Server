@@ -29,7 +29,7 @@ You can download a binary version for Windows from [Releases](https://github.com
 ### To run the server or an example:
 
 - To run the server, run: `yarn start`.
-- To test scrabble game only, run: `yarn console-go`.
+- To play go-game only (offline), run: `yarn console-go`.
 - To run the console client, run: `yarn console-client [name] [address=ws://localhost:8080]`.
 
 ### Additional Options
@@ -46,7 +46,7 @@ Server configuration is found in `server.config.json`, which contains the follow
 - `port`: defines the port to which the server will listen.
 - `ping interval`: defines the time interval for the ping/pong handshake in the heartbeat system (Format: `MM:ss.s`).
 
-Game configuration is found in `game.config.json`, which contains the configuration described in the [Communication Protocol Document](docs/protocol.pdf).
+Game configuration is found in `game.config.json`, which contains the configuration described in the [Communication Protocol Document](docs/protocol.pdf). You can edit the game configuration file and the server will automatically detect the changes without restarting.
 
 ## How to use the Server
 
