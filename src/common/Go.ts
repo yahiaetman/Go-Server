@@ -27,6 +27,7 @@ export interface EndGameInfo {
 export default class GoGame {
     private configuration!: GameConfiguration;
     private history!: HistoryEntry[];
+    private idleDeltaTime!: number;
 
     constructor (configuration?: GameConfiguration){
         this.Configuration = configuration || GoGame.DefaultConfiguration;
@@ -34,6 +35,7 @@ export default class GoGame {
 
     public set Configuration(configuration: GameConfiguration) {
         this.configuration = configuration;
+        this.idleDeltaTime = configuration.idleDeltaTime;
         this.history = [{
             type: 'start',
             state: this.configuration.initialState,
@@ -57,7 +59,7 @@ export default class GoGame {
     public get Configuration(): GameConfiguration {
         let config = _.cloneDeep(this.configuration);
         config.moveLog = [];
-        config.idleDeltaTime = 0;
+        config.idleDeltaTime = this.idleDeltaTime;
         let lastRemainingTime: number = 0;
         for(let entry of this.history){
             if(entry.type === "start"){
@@ -109,7 +111,9 @@ export default class GoGame {
     }
 
     public get CurrentState(): GameState {
-        return this.history[this.history.length-1].state;
+        let state = _.cloneDeep(this.history[this.history.length-1].state);
+        state.players[state.turn].remainingTime -= this.idleDeltaTime;
+        return state;
     }
 
     public get BoardSize(): number {
@@ -158,6 +162,7 @@ export default class GoGame {
     public timeout() {
         const nextState = _.cloneDeep(this.CurrentState);
         nextState.players[nextState.turn].remainingTime = 0;
+        this.idleDeltaTime = 0;
         this.history.push({
             type: 'end',
             state: nextState,
@@ -169,11 +174,16 @@ export default class GoGame {
         });
     }
 
+    public pause(idleDeltaTime: number){
+        this.idleDeltaTime += idleDeltaTime;
+    }
+
     public apply(move: Move, deltaTime: number): {valid: boolean, state: GameState, message?: string} {
         let state = this.CurrentState;
         let nextState: GameState = _.cloneDeep(state);
         nextState.players[nextState.turn].remainingTime -= deltaTime;
         if(move.type === 'resign'){
+            this.idleDeltaTime = 0;
             this.history.push({
                 type: 'move',
                 state: nextState,
@@ -190,6 +200,7 @@ export default class GoGame {
             });
             return {valid: true, state: nextState};
         } else if(move.type === 'pass'){
+            this.idleDeltaTime = 0;
             nextState.turn = ColorUtility.FlipColor(nextState.turn);
             nextState.players[nextState.turn].prisoners++;
             this.history.push({
@@ -249,10 +260,22 @@ export default class GoGame {
                 type: 'move',
                 state: nextState,
                 move: move
-            })
+            });
+            this.idleDeltaTime = 0;
             return {valid: true, state: nextState};
         } else {
             return {valid: false, state: this.CurrentState, message: "Invalid type"};
+        }
+    }
+
+    public undo() {
+        let lastEntry = this.history[this.history.length - 1];
+        if(lastEntry.type == 'end'){
+            this.history.pop();
+            lastEntry = this.history[this.history.length - 1];
+        }
+        if(lastEntry.type != 'start'){
+            this.history.pop();
         }
     }
 

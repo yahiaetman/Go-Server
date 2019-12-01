@@ -66,13 +66,13 @@ rl.on("line", (input)=>{
     let move: Move;
     let args = input.toLowerCase().trim().split(/\s+/, 2);
     switch(args[0] ?? ''){
-        case 'pass':
+        case 'p': case 'pass':
             move = {type: 'pass'};
             break;
-        case 'resign':
+        case 'r': case 'resign':
             move = {type: 'resign'};
             break;
-        case 'place':
+        case 'place':{
             if(args.length < 2){
                 console.error("Please enter a point");
                 rl.prompt();
@@ -86,10 +86,31 @@ rl.on("line", (input)=>{
             }
             move = {type: 'place', point: point};
             break;
-        default:
-            console.error("Invalid Command");
+        }
+        case 'h': case 'help':{
+            console.log("Commands:");
+            console.log("   - pass");
+            console.log("   - resign");
+            console.log("   - place <point>");
+            console.log("   - help");
+            console.log("   - exit");
             rl.prompt();
             return;
+        }
+        case 'exit': case 'quit':{
+            console.log('Goodbye!'); // Remember to say goodbye to the user before quitting :D
+            process.exit(0);
+        }
+        default:{
+            let point = PointUtility.Parse(args[1]);
+            if(point == null){
+                console.error("Invalid Command");
+                rl.prompt();
+                return;
+            }
+            move = {type: 'place', point: point};
+            break;
+        }
     }
     processEvent({ type: "INPUT", move: move });
 }).on("close", ()=>{

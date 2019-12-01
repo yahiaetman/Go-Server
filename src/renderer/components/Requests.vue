@@ -42,7 +42,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import { Component, Prop, Watch } from 'vue-property-decorator';
 import { Client } from './renderer-types';
 import { Color } from '../../types/types';
 
@@ -64,6 +64,11 @@ export default class RequestsComponent extends Vue {
 
     private disconnect(client: Client){
         this.$emit("disconnect", client.id);
+    }
+
+    @Watch('clients')
+    onRequestsChange(){
+        this.expanded = true;
     }
 }
 </script>

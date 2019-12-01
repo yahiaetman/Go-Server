@@ -29,14 +29,16 @@ You can download a binary version for Windows from [Releases](https://github.com
 ### To run the server or an example:
 
 - To run the server, run: `yarn start`.
-- To play go-game only (offline), run: `yarn console-go`.
-- To run the console client, run: `yarn console-client [name] [address=ws://localhost:8080]`.
+- To run the console client, run: `yarn console:client [name] [address=ws://localhost:8080]`.
 
 ### Additional Options
 
-- To the server on the console, run: `yarn console-server`.
+- To run the server on the console, run: `yarn console:server`.
+- To run a silly greedy agent, run: `yarn console:silly-agent`.
+- To play go-game only (offline), run: `yarn console:go`.
 - To package the server for distribution, run: `yarn dist`.
 - To run tests, run: `yarn test`.
+- To build the main and rendering threads in watch mode, run: `yarn watch:main` and `yarn watch:renderer` each in a separate terminal.
 
 ## Configuration
 

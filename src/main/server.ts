@@ -302,7 +302,7 @@ export class Server {
                         this.state = ServerState.IDLE;
                         let players = this.Players;
                         _.forEach(players, (player, color)=>{
-                            this.send(player, {type: "START", configuration: this.gameManager.Configuration, color: color});
+                            this.send(player, {type: "START", configuration: this.gameManager.StartingConfiguration, color: color});
                         });
                         this.gameManager.start();
                         this.logger?.info("\n" + _.repeat(_.repeat("#", 80) + "\n", 4));
@@ -355,7 +355,6 @@ export class Server {
                         reason: string,
                         winner: types.Color,
                         players: {[name: string]: {score: number, remainingTime: number}}
-
                     } = {
                         type: "END",
                         reason: event.reason,
@@ -373,7 +372,7 @@ export class Server {
                     } else {
                         let endGameInfo = this.gameManager.EndGameInfo;
                         let scores = endGameInfo?.scores ?? {[types.Color.BLACK]:0, [types.Color.WHITE]:0};
-                        let state = this.gameManager.CurrentState;
+                        let state = this.gameManager.Game.CurrentState;
                         message.winner = endGameInfo?.winner ?? types.Color.NONE;
                         message.players = {
                             [types.Color.BLACK]:{score: scores[types.Color.BLACK], remainingTime: state.players[types.Color.BLACK].remainingTime},
@@ -389,6 +388,7 @@ export class Server {
                     }
                     this.state = ServerState.INIT;
                     this.logger?.info?.(`Game ending for the reason: ${message.reason}`);
+                    this.logger?.info?.('\n' + this.gameManager.toString());
                     this.logger?.info?.(`Winner: ${message.winner}`);
                     this.logger?.info?.(`B => Score: ${message.players[types.Color.BLACK].score}, Remaining Time: ${TimeUtility.Format(message.players[types.Color.BLACK].remainingTime)}`);
                     this.logger?.info?.(`W => Score: ${message.players[types.Color.WHITE].score}, Remaining Time: ${TimeUtility.Format(message.players[types.Color.WHITE].remainingTime)}`);
@@ -421,6 +421,7 @@ export class Server {
                         if(result.valid){
                             this.logger?.info("Move accepted");
                             status += ` (Accepted)`;
+                            this.logger?.info?.('\n' + this.gameManager.toString());
                             this.send(players[turn], {type:"VALID", remainingTime:remainingTime});
                             this.send(players[other], {type:"MOVE", move:event.message.move, remainingTime:remainingTime});
                         } else {

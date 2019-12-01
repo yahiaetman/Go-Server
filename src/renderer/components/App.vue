@@ -132,7 +132,7 @@ export default class AppComponent extends Vue {
     background-color: $color4;
     margin: 0%;
     position: absolute; top: 0; right: 25px; bottom: 25px; left: 0;
-    box-shadow: 5px 5px 20px 0px #00000088;
+    box-shadow: 10px 10px 10px 0px #00000044;
     border-radius: 10px;
     font-family: 'Roboto', sans-serif;
 };

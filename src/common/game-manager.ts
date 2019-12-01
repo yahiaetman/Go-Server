@@ -50,7 +50,7 @@ export default class GameManager {
                 this.configLayers.configFile = this.readConfig(GameManager.GameConfigPath);
             }
             if(this.state !== ManagerState.PLAYING && this.volatile) {
-                this.game.Configuration = this.Configuration;
+                this.game.Configuration = this.StartingConfiguration;
                 this.options?.reload?.();
             }
         });
@@ -63,12 +63,12 @@ export default class GameManager {
                 this.configLayers.checkpointFile = this.readConfig(GameManager.CheckpointPath);
             }
             if(this.state !== ManagerState.PLAYING && this.volatile) {
-                this.game.Configuration = this.Configuration;
+                this.game.Configuration = this.StartingConfiguration;
                 this.options?.reload?.();
             }
         });
 
-        this.game = new GoGame(this.Configuration);
+        this.game = new GoGame(this.StartingConfiguration);
         this.state = ManagerState.READY;
         this.volatile = true;
         process.nextTick(()=>{this.options?.reload?.()});
@@ -94,7 +94,6 @@ export default class GameManager {
     private saveCheckpoint() {
         this.logger?.info?.(`Saving a checkpoint...`);
         let config = this.game.Configuration;
-        config.idleDeltaTime = this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime - this.timer.lap();
         fs.writeFileSync(GameManager.CheckpointPath, JSON.stringify(config, null, 4));
     }
 
@@ -106,7 +105,7 @@ export default class GameManager {
                 const discardedPath = path.join(path.dirname(GameManager.CheckpointPath), `discarded-${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}.json`);
                 fs.renameSync(GameManager.CheckpointPath, discardedPath);
             } else {
-                this.game.Configuration = this.Configuration;
+                this.game.Configuration = this.StartingConfiguration;
             }
             this.options.reload?.();
         }
@@ -121,9 +120,17 @@ export default class GameManager {
         }
     }
 
-    public get Configuration() : GameConfiguration {
+    public get StartingConfiguration(): GameConfiguration {
+        if(this.configLayers.checkpointFile !== null) return this.configLayers.checkpointFile;
+        else if(this.configLayers.configFile !== null) return this.configLayers.configFile;
+        else return GoGame.DefaultConfiguration;
+    }
+
+    public get CurrentConfiguration() : GameConfiguration {
         if(this.state == ManagerState.PLAYING){
-            return this.game.Configuration;
+            let config = this.game.Configuration;
+            config.idleDeltaTime = this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime - this.timer.lap();
+            return config;
         } else {
             if(this.configLayers.checkpointFile !== null) return this.configLayers.checkpointFile;
             else if(this.configLayers.configFile !== null) return this.configLayers.configFile;
@@ -148,7 +155,7 @@ export default class GameManager {
     public start() {
         if(this.state == ManagerState.PLAYING) return;
         
-        let config = this.Configuration;
+        let config = this.StartingConfiguration;
         this.game.Configuration = config;
         this.timer.start(this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime - config.idleDeltaTime);
         this.state = ManagerState.PLAYING;
@@ -158,6 +165,8 @@ export default class GameManager {
     public stop() {
         this.state = ManagerState.READY;
         this.timer.pause();
+        let state = this.game.CurrentState
+        this.game.pause(state.players[state.turn].remainingTime - this.timer.lap());
         this.saveCheckpoint();
     }
 
@@ -202,8 +211,6 @@ export default class GameManager {
         let state = _.cloneDeep(this.game.CurrentState);
         if(this.state == ManagerState.PLAYING)
             state.players[state.turn].remainingTime = this.timer.lap();
-        else
-            state.players[state.turn].remainingTime -= this.Configuration.idleDeltaTime;
         return state;
     }
 

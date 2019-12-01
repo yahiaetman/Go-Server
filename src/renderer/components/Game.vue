@@ -54,7 +54,7 @@
                 <button class="big-round-button center-button" :disabled="!bothPlayers" @click="start">
                     <i class="material-icons">{{running?'pause':'play_arrow'}}</i>
                 </button>
-                <button class="small-round-button left-button" tooltip="Swap Players" data-tooltipleft="-50px" :disabled="!anyPlayer" @click="swap">
+                <button class="small-round-button left-button" tooltip="Swap Players" data-tooltipleft="-50px" :disabled="running || !anyPlayer" @click="swap">
                     <i class="material-icons">swap_horiz</i>
                 </button>
                 <button class="small-round-button right-button" tooltip="Clear Board" :disabled="!canClear" @click="clear">

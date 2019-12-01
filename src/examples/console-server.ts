@@ -124,8 +124,14 @@ rl.on('line', (input)=>{
             console.log("   - start");
             console.log("   - stop");
             console.log("   - clear");
+            console.log("   - help");
+            console.log("   - exit");
             rl.prompt();
             break;
+        }
+        case 'exit': case 'quit':{
+            console.log('Goodbye!'); // Remember to say goodbye to the user before quitting :D
+            process.exit(0);
         }
         default:{
             console.log(`Unknown command ${commands[0]}`);
