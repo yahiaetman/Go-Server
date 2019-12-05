@@ -56,16 +56,35 @@ After running the server, run 2 clients then choose the clients to join the game
 
 ## How to use the Console Client
 
-Run: `yarn console-client [name] [address=ws://localhost:8080]`. If the client and server are on the same device, you can use the default host (`localhost`). Otherwise, you need to find the Server IP by running `ipconfig` on the host machine. 
+Run: `yarn console:client [name] [address=ws://localhost:8080]`. If the client and server are on the same device, you can use the default host (`localhost`). Otherwise, you need to find the Server IP by running `ipconfig` on the host machine. 
 
 The client can play their turn using on of the following commands:
 
-- `PASS`
-- `RESIGN`
-- `PLACE [Point]` where:
-	- `Point` is written in the form: `Column` and `Row`.
-    - `Column` can be a letter from **A** to **Z** except **I** and `Row` can be a number from **1** to **25**.
+- `pass`
+- `resign`
+- `place <point>` where:
+	- `point` is written in the form: `column` and `row`.
+    - `column` can be a letter from **A** to **Z** except **I** and `row` can be a number from **1** to **25**.
     - For example, the upper left point in the board will always be **A1**.
+- Other commands: `help` and `exit`.
+
+## How to use the Console Server
+
+Run: `yarn console:server`. 
+
+The server can manage the game using on of the following commands:
+
+- `view <state | clients>` to view the game state or the clients list.
+    - `state` will display the game board, scores, time, and turn.
+    - `clients` will display the connected clients with their names, addresses and automatically assigned IDs. A list of selected players will also be shown.
+- `join <client-id> <color>` to add a client to the game as a player where `color` is either `B` or `W`.
+- `leave <client-id>` to remove the client from the players' list.
+- `disconnect <client-id>` to forcefully disconnect a client from the server.
+- `swap` to swap the colors of the players.
+- `start` to start a game from the current state.
+- `stop` to pause the game.
+- `clear` to discard the checkpoint and set the current state to match `game.config.json`.
+- Other commands: `help` and `exit`.
 
 ## License
 The project is available as open source under the terms of the [MIT License](LICENSE).
