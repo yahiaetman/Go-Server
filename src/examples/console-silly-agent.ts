@@ -24,7 +24,8 @@ if(isMainThread){
     };
 
     const name = process.argv[2] ?? `Client-${process.pid}`;
-    const url = process.argv[3] ?? 'ws://localhost:8080'
+    const url = process.argv[3] ?? 'ws://localhost:8080';
+    const protocol = process.argv[4] ?? null;
 
     const game = new GoGame();
 
@@ -108,7 +109,8 @@ if(isMainThread){
             if(event.type == "MESSAGE"){
                 switch(event.message.type){
                     case "NAME":
-                        socket.send(JSON.stringify({type:"NAME", name:name}));
+                        let protocolFragment = protocol==null?{}:{protocol:protocol}
+                        socket.send(JSON.stringify({type:"NAME", name:name, ...protocolFragment}));
                         state = ClientState.READY;
                         console.log("Client is ready to play");
                         break;

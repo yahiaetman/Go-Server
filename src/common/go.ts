@@ -116,6 +116,10 @@ export default class GoGame {
         return state;
     }
 
+    public get StateHistory(): GameState[] {
+        return _.map(this.history, (entry)=>_.cloneDeep(entry.state));
+    }
+
     public get BoardSize(): number {
         return this.history[this.history.length-1].state.board.length;
     }

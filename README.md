@@ -56,7 +56,7 @@ After running the server, run 2 clients then choose the clients to join the game
 
 ## How to use the Console Client
 
-Run: `yarn console:client [name] [address=ws://localhost:8080]`. If the client and server are on the same device, you can use the default host (`localhost`). Otherwise, you need to find the Server IP by running `ipconfig` on the host machine. 
+Run: `yarn console:client [name] [address=ws://localhost:8080] [protocol]`. If the client and server are on the same device, you can use the default host (`localhost`). Otherwise, you need to find the Server IP by running `ipconfig` on the host machine. `protocol` is an optional argument to determine the protocol version requested by the client. The supported protocols are: `v1` (default) and `v2`.
 
 The client can play their turn using on of the following commands:
 

@@ -23,6 +23,7 @@ type ClientEvent = {
 
 const name = process.argv[2] ?? `Client-${process.pid}`; // Get the user name from the command line arguments if defined (default: 'client-' + process-id)
 const url = process.argv[3] ?? 'ws://localhost:8080'; // Get the websocket url from the command line arguments if defined (default: ws://localhost:8080)
+const protocol = process.argv[4] ?? null; // Get the protocol version requested by the client (Note: this is ignored by the client code and is added only for debugging purposes)
 
 const game = new GoGame(); // Create a go game to track the game state
 
@@ -152,7 +153,8 @@ function processEvent(event: ClientEvent){
         if(event.type == "MESSAGE"){ // If this is a server message
             switch(event.message.type){
                 case "NAME": // And the message type is NAME
-                    socket.send(JSON.stringify({type:"NAME", name:name})); // We reply with our name
+                    let protocolFragment = protocol==null?{}:{protocol:protocol}
+                    socket.send(JSON.stringify({type:"NAME", name:name, ...protocolFragment})); // We reply with our name
                     state = ClientState.READY; // Then go to ready
                     console.log("Client is ready to play");
                     break;

@@ -18,10 +18,21 @@ enum ServerState {
     IDLE
 };
 
+enum Protocol {
+    v1="v1",
+    v2="v2"
+};
+
+function parseProtocol(name: string): Protocol | undefined {
+    name = name.toLowerCase();
+    return _.find(Protocol, protocol => Protocol[protocol] === name);
+}
+
 interface Client {
     id: number,
     name: string,
     address: string,
+    protocol: Protocol,
     socket: WebSocket,
     ready: boolean,
     alive: boolean,
@@ -114,6 +125,7 @@ export class Server {
                 id: Server.generateID(),
                 name: "",
                 address: request.connection.remoteAddress??"",
+                protocol: Protocol.v1,
                 socket: socket,
                 alive: true,
                 ready: false,
@@ -134,11 +146,17 @@ export class Server {
                         if(message.type == 'MOVE'){
                             this.processEvent({ type:"MESSAGE", client: client, message: message });
                         } else {
-                            this.logger?.error(`Unexpected ${message.type} message from ${client.name} (${client.address})`);
+                            this.logger?.error(`Unexpected ${message.type} message from ${client.name}@${client.address}`);
                         }
                     } else {
                         if(message.type == 'NAME'){
                             client.name = message.name;
+                            let protocol = parseProtocol(message.protocol);
+                            if(protocol){
+                                client.protocol = message.protocol as Protocol;
+                            } else {
+                                this.logger?.error(`Unknown protocol "${message.protocol}" from ${client.name}@${client.address}, defaulting to "v1"`);
+                            }
                             client.ready = true;
                             this.clients.push(client);
                             this.processEvent({type:"CONNECT", client: client});
@@ -249,7 +267,7 @@ export class Server {
         if(this.state == ServerState.INIT){
             switch(event.type){
                 case "CONNECT":{
-                    this.logger?.info(`Welcome, ${event.client.name}@${event.client.address}`);
+                    this.logger?.info(`Welcome, ${event.client.name}@${event.client.address} (Protocol: ${event.client.protocol})`);
                     this.options.statusUpdate?.(`Welcome, ${event.client.name}@${event.client.address}`);
                     this.options.serverUpdate?.();
                     break;
@@ -302,7 +320,14 @@ export class Server {
                         this.state = ServerState.IDLE;
                         let players = this.Players;
                         _.forEach(players, (player, color)=>{
-                            this.send(player, {type: "START", configuration: this.gameManager.StartingConfiguration, color: color});
+                            let config;
+                            if(player?.protocol == Protocol.v2) {
+                                let states = this.gameManager.Game.StateHistory;
+                                if(states.length > 2) states.splice(0, states.length-2);
+                                config = {...this.gameManager.StartingConfiguration, finalStates: states};
+                            }
+                            else config = this.gameManager.CurrentConfiguration;
+                            this.send(player, {type: "START", configuration: config, color: color});
                         });
                         this.gameManager.start();
                         this.logger?.info("\n" + _.repeat(_.repeat("#", 80) + "\n", 4));
