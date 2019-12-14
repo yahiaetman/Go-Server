@@ -20,7 +20,7 @@ export type HistoryEntry = {
 
 export interface EndGameInfo {
     winner: Color,
-    reason: 'resign' | 'pass' | 'timeout',
+    reason: 'resign' | 'pass' | 'timeout' | 'mercy',
     scores: {[index: string]:number} 
 }
 
@@ -95,6 +95,9 @@ export default class GoGame {
         return {
             komi: 6.5,
             ko: true,
+            superko: false,
+            mercy: 0,
+            mercyStart: 50,
             scoringMethod: 'area',
             prisonerScore: 1,
             initialState: {
@@ -151,6 +154,10 @@ export default class GoGame {
             }
         }
         return scores;
+    }
+
+    private static getWinnerFromScores(scores: {[index: string]:number}): Color {
+        return scores[Color.BLACK]==scores[Color.WHITE]?Color.NONE:(scores[Color.BLACK]>scores[Color.WHITE]?Color.BLACK:Color.WHITE);
     }
 
     public get EndGameInfo(): EndGameInfo | null {
@@ -219,11 +226,24 @@ export default class GoGame {
                     type: 'end',
                     state: nextState,
                     info: {
-                        winner: scores[Color.BLACK]==scores[Color.WHITE]?Color.NONE:(scores[Color.BLACK]>scores[Color.WHITE]?Color.BLACK:Color.WHITE),
+                        winner: GoGame.getWinnerFromScores(scores),
                         reason: "pass",
                         scores: this.Scores
                     }
                 });
+            } else if(this.configuration.mercy != 0 && this.history.length-1 >= this.configuration.mercyStart){
+                const scores = this.Scores;
+                if(Math.abs(scores[Color.BLACK] - scores[Color.WHITE]) >= this.configuration.mercy){
+                    this.history.push({
+                        type: 'end',
+                        state: nextState,
+                        info: {
+                            winner: GoGame.getWinnerFromScores(scores),
+                            reason: "mercy",
+                            scores: this.Scores
+                        }
+                    });
+                }
             }
             return {valid: true, state: nextState};
         } else if(move.type === 'place'){
@@ -235,11 +255,11 @@ export default class GoGame {
             }
             nextState.board[move.point.row][move.point.column] = nextState.turn;
             let result = this.Analyze(nextState.board);
-            let nexTurn: Color = ColorUtility.FlipColor(nextState.turn);
+            let nextTurn: Color = ColorUtility.FlipColor(nextState.turn);
             let killed = false;
             for(let id = 0; id < result.clusters.length; id++){
                 let cluster = result.clusters[id];
-                if(cluster.color == nexTurn && cluster.neighbors[Color.NONE]==0){
+                if(cluster.color == nextTurn && cluster.neighbors[Color.NONE]==0){
                     killed = true;
                     for(let row: number = 0; row < this.BoardSize; row++){
                         for(let column: number = 0; column < this.BoardSize; column++){
@@ -256,16 +276,33 @@ export default class GoGame {
                     return {valid: false, state: this.CurrentState, message: 'Suicide'};
                 }
             }
+            nextState.turn = nextTurn;
+            if(this.configuration.superko && _.some(this.history, entry => _.isEqual(entry.state.board, nextState.board) && entry.state.turn == nextState.turn)){
+                return {valid: false, state: this.CurrentState, message: 'SuperKo'};
+            }
             if(this.configuration.ko && this.history.length >= 2 && _.isEqual(this.history[this.history.length-2].state.board, nextState.board)){
                 return {valid: false, state: this.CurrentState, message: 'Ko'};
             }
-            nextState.turn = nexTurn;
             this.history.push({
                 type: 'move',
                 state: nextState,
                 move: move
             });
             this.idleDeltaTime = 0;
+            if(this.configuration.mercy != 0 && this.history.length-1 >= this.configuration.mercyStart){
+                const scores = this.Scores;
+                if(Math.abs(scores[Color.BLACK] - scores[Color.WHITE]) >= this.configuration.mercy){
+                    this.history.push({
+                        type: 'end',
+                        state: nextState,
+                        info: {
+                            winner: GoGame.getWinnerFromScores(scores),
+                            reason: "mercy",
+                            scores: this.Scores
+                        }
+                    });
+                }
+            }
             return {valid: true, state: nextState};
         } else {
             return {valid: false, state: this.CurrentState, message: "Invalid type"};

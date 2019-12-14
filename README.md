@@ -11,6 +11,8 @@
 
 ![Screenshot](docs/screenshot.png)
 
+## This branch includes the SuperKo and Mercy Rules. It is not used in the contest for Fall 2019
+
 The server uses Websockets protocol version 13 as defined by RFC6455 (https://tools.ietf.org/html/rfc6455)
 
 Communication Details can found in [this document](docs/protocol.pdf).
