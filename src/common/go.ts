@@ -206,7 +206,7 @@ export default class GoGame {
         } else if(move.type === 'pass'){
             this.idleDeltaTime = 0;
             nextState.turn = ColorUtility.FlipColor(nextState.turn);
-            nextState.players[nextState.turn].prisoners++;
+            //nextState.players[nextState.turn].prisoners++;
             this.history.push({
                 type: 'move',
                 state: nextState,
