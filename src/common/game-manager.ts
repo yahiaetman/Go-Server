@@ -132,9 +132,7 @@ export default class GameManager {
             config.idleDeltaTime = this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime - this.timer.lap();
             return config;
         } else {
-            if(this.configLayers.checkpointFile !== null) return this.configLayers.checkpointFile;
-            else if(this.configLayers.configFile !== null) return this.configLayers.configFile;
-            else return GoGame.DefaultConfiguration;
+            return this.StartingConfiguration;
         }
     }
 
@@ -157,7 +155,7 @@ export default class GameManager {
         
         let config = this.StartingConfiguration;
         this.game.Configuration = config;
-        this.timer.start(this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime - config.idleDeltaTime);
+        this.timer.start(this.game.CurrentState.players[this.game.CurrentState.turn].remainingTime);
         this.state = ManagerState.PLAYING;
         this.volatile = false;
     }
