@@ -1,3 +1,5 @@
+## This branch includes the SuperKo and Mercy Rules. It is not used in the contest for Fall 2019
+
 <img src="docs/icon.png" align="right"/>
 
 # Go-Server
@@ -10,6 +12,7 @@
 [![GitHub license](https://img.shields.io/github/license/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/blob/master/LICENSE)
 
 ![Screenshot](docs/screenshot.png)
+
 
 The server uses Websockets protocol version 13 as defined by RFC6455 (https://tools.ietf.org/html/rfc6455)
 

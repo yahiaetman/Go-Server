@@ -35,7 +35,7 @@ export const InvalidMessage = io.interface({
 
 export const EndMessage = io.interface({
     type: io.literal("END"),
-    reason: io.union([io.literal('resign'), io.literal('pass'), io.literal('timeout'), io.literal('pause'), io.literal('error')]),
+    reason: io.union([io.literal('resign'), io.literal('pass'), io.literal('timeout'), io.literal('mercy'), io.literal('pause'), io.literal('error')]),
     winner: Color,
     players: io.record(Color, io.interface({
         remainingTime: Time,

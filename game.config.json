@@ -10,6 +10,9 @@
     "moveLog":[],
     "komi": 6.5,
     "ko": true,
+    "superko": false,
+    "mercy": 50,
+    "mercyStart": 100,
     "scoringMethod": "area",
     "prisonerScore": 1
 }
