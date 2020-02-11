@@ -1,6 +1,6 @@
 {
   "name": "go-server",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Go Server is a 2-Player Websockets Go Judging Server.",
   "main": "public/main/main.js",
   "repository": "https://github.com/yahiaetman/Go-Server.git",

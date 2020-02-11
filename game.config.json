@@ -9,10 +9,11 @@
     },
     "moveLog":[],
     "komi": 6.5,
-    "ko": true,
-    "superko": false,
-    "mercy": 50,
-    "mercyStart": 100,
+    "ko": false,
+    "superko": true,
+    "mercy": 0,
+    "mercyStart": 0,
     "scoringMethod": "area",
-    "prisonerScore": 1
+    "prisonerScore": 1,
+    "passAddsToPrisoners": false
 }

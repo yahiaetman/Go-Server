@@ -1,10 +1,8 @@
-## This branch includes the SuperKo and Mercy Rules. It is not used in the contest for Fall 2019
-
 <img src="docs/icon.png" align="right"/>
 
 # Go-Server
 
-> Go Server is a 2-Player Websockets Go Judging Server. This project is made for the Fall 2019 Machine Intelligence Course (CMPN402/CMP402A) in Computer Engineering Program at Cairo University Faculty of Engineering.
+> Go Server is a 2-Player Websockets Go Judging Server. This project is made for the Spring 2020 Machine Intelligence Course (CMPN402) in Computer Engineering Program at Cairo University Faculty of Engineering.
 
 [![GitHub issues](https://img.shields.io/github/issues/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/issues)
 [![GitHub forks](https://img.shields.io/github/forks/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/network)
