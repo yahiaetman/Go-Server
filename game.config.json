@@ -12,7 +12,7 @@
     "ko": false,
     "superko": true,
     "mercy": 0,
-    "mercyStart": 0,
+    "mercyStart": 100,
     "scoringMethod": "area",
     "prisonerScore": 1,
     "passAddsToPrisoners": false
