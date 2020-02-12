@@ -5,7 +5,8 @@
     },
     "extends": [
         "plugin:vue/essential",
-        "google"
+        "google",
+        "plugin:prettier/recommended"
     ],
     "globals": {
         "Atomics": "readonly",
@@ -18,8 +19,11 @@
     },
     "plugins": [
         "vue",
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "prettier"
     ],
     "rules": {
+        "prettier/prettier": "error",
+        "no-unused-vars": "off"
     }
 }

@@ -1,33 +1,32 @@
-
 @import './variables.scss';
 
 body {
-    margin: 0%;
+  margin: 0%;
 }
 
 [tooltip]:before {
-    /* needed - do not touch */
-    content: attr(tooltip);
-    position: absolute;
-    z-index: 1000;
-    opacity: 0;
-    
-    /* customizable */
-    transition: all 0.15s ease;
-    padding: 4px 8px;
-    color: $color5;
-    font-family: 'Roboto', sans-serif;
-    font-size: 12px;
-    border-radius: 10px;
-    box-shadow: 2px 2px 2px #00000044;    
+  /* needed - do not touch */
+  content: attr(tooltip);
+  position: absolute;
+  z-index: 1000;
+  opacity: 0;
+
+  /* customizable */
+  transition: all 0.15s ease;
+  padding: 4px 8px;
+  color: $color5;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  border-radius: 10px;
+  box-shadow: 2px 2px 2px #00000044;
 }
 
 [tooltip]:hover:before {
-    /* needed - do not touch */
-    opacity: 1;
-    
-    /* customizable */
-    background: $color1;
-    margin-top: 36px;
-    margin-left: 36px;
+  /* needed - do not touch */
+  opacity: 1;
+
+  /* customizable */
+  background: $color1;
+  margin-top: 36px;
+  margin-left: 36px;
 }
