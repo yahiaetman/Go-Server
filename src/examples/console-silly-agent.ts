@@ -237,7 +237,8 @@ if (isMainThread) {
     } else {
       const scores = game.Scores;
       game.undo();
-      return scores[color] - scores[flipColor(color)];
+      const difference = scores[color] - scores[flipColor(color)];
+      return move.type == 'pass' && difference < 0 ? -1e10 : difference;
     }
   }
 
