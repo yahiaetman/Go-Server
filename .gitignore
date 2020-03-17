@@ -67,3 +67,4 @@ public/
 # custom
 checkpoints/
 logs/
+.cache/

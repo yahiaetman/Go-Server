@@ -58,7 +58,6 @@ export default class GoGame {
    */
   public set Configuration(configuration: GameConfiguration) {
     this.configuration = configuration;
-    this.idleDeltaTime = configuration.idleDeltaTime;
     this.history = [
       {
         type: 'start',
@@ -70,7 +69,7 @@ export default class GoGame {
         this.apply(entry.move, entry.deltaTime);
       } else if (entry.end) {
         const end = entry.end;
-        const state = _.cloneDeep(this.CurrentState);
+        const state = _.cloneDeep(this.InternalCurrentState);
         state.players[state.turn].remainingTime -= entry.deltaTime;
         this.history.push({
           type: 'end',
@@ -79,6 +78,7 @@ export default class GoGame {
         });
       }
     }
+    this.idleDeltaTime = configuration.idleDeltaTime;
   }
 
   /**
@@ -171,6 +171,14 @@ export default class GoGame {
   }
 
   /**
+   * Gets the current state
+   * @return {GameState} the current game state
+   */
+  private get InternalCurrentState(): GameState {
+    return this.history[this.history.length - 1].state;
+  }
+
+  /**
    * Gets the full history as states
    * @return {GameState[]} a list of states collected from the history in temporal order
    */
@@ -191,7 +199,7 @@ export default class GoGame {
    * @return {Board} a board where the current of each point represents which player hold the territory over this point
    */
   public get Territories(): Board {
-    const result = this.analyze(this.CurrentState.board);
+    const result = this.analyze(this.InternalCurrentState.board);
     const territories: Color[] = _.map(result.clusters, cluster => {
       if (cluster.color != Color.NONE) return Color.NONE;
       if (
@@ -216,7 +224,7 @@ export default class GoGame {
    * @return {object} an object containing the score of each player
    */
   public get Scores(): { [index: string]: number } {
-    const state = this.CurrentState;
+    const state = this.InternalCurrentState;
     const result = this.analyze(state.board);
     const scores = {
       [Color.BLACK]:
@@ -282,7 +290,7 @@ export default class GoGame {
    * Call this to signal a timeout
    */
   public timeout() {
-    const nextState = _.cloneDeep(this.CurrentState);
+    const nextState = _.cloneDeep(this.InternalCurrentState);
     nextState.players[nextState.turn].remainingTime = 0;
     this.idleDeltaTime = 0;
     this.history.push({
@@ -314,7 +322,7 @@ export default class GoGame {
     move: Move,
     deltaTime: number
   ): { valid: boolean; state: GameState; message?: string } {
-    const state = this.CurrentState;
+    const state = this.InternalCurrentState;
     const nextState: GameState = _.cloneDeep(state);
     nextState.players[nextState.turn].remainingTime -= deltaTime;
     if (move.type === 'resign') {
@@ -386,14 +394,14 @@ export default class GoGame {
       ) {
         return {
           valid: false,
-          state: this.CurrentState,
+          state: state,
           message: 'Out of Bound'
         };
       }
       if (nextState.board[move.point.row][move.point.column] != Color.NONE) {
         return {
           valid: false,
-          state: this.CurrentState,
+          state: state,
           message: 'Nonempty point'
         };
       }
@@ -420,7 +428,7 @@ export default class GoGame {
           result.clusters[result.board[move.point.row][move.point.column]]
             .neighbors[Color.NONE] == 0
         ) {
-          return { valid: false, state: this.CurrentState, message: 'Suicide' };
+          return { valid: false, state: state, message: 'Suicide' };
         }
       }
       nextState.turn = nextTurn;
@@ -433,7 +441,7 @@ export default class GoGame {
             entry.state.turn == nextState.turn
         )
       ) {
-        return { valid: false, state: this.CurrentState, message: 'SuperKo' };
+        return { valid: false, state: state, message: 'SuperKo' };
       }
       if (
         this.configuration.ko &&
@@ -443,7 +451,7 @@ export default class GoGame {
           nextState.board
         )
       ) {
-        return { valid: false, state: this.CurrentState, message: 'Ko' };
+        return { valid: false, state: state, message: 'Ko' };
       }
       this.history.push({
         type: 'move',
@@ -475,7 +483,7 @@ export default class GoGame {
     } else {
       return {
         valid: false,
-        state: this.CurrentState,
+        state: state,
         message: 'Invalid type'
       };
     }

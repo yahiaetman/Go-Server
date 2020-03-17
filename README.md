@@ -4,6 +4,7 @@
 
 > Go Server is a 2-Player Websockets Go Judging Server. This project is made for the Spring 2020 Machine Intelligence Course (CMPN402) in Computer Engineering Program at Cairo University Faculty of Engineering.
 
+[![Actions Status](https://github.com/yahiaetman/Go-Server/workflows/test/badge.svg)](https://github.com/yahiaetman/Go-Server/actions)
 [![GitHub issues](https://img.shields.io/github/issues/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/issues)
 [![GitHub forks](https://img.shields.io/github/forks/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/network)
 [![GitHub stars](https://img.shields.io/github/stars/yahiaetman/Go-Server)](https://github.com/yahiaetman/Go-Server/stargazers)
