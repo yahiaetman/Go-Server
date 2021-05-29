@@ -93,7 +93,7 @@
     "vue": "^2.6.10",
     "vue-property-decorator": "^8.2.2",
     "winston": "^3.2.1",
-    "ws": "^7.1.2"
+    "ws": "^7.4.6"
   },
   "devDependencies": {
     "@types/dateformat": "^3.0.1",
